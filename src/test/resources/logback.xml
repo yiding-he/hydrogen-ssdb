@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- logback 日志框架。配置文件说明：http://logback.qos.ch/manual/index.html -->
+<configuration scan="true" scanPeriod="30 seconds">
+    <!-- 访问日志 -->
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss} [%-5level] %logger{10}:%line - %msg%n</pattern>
+        </encoder>
+    </appender>
+    <!--////////////////////////////////////////////////////////////-->
+    <!-- 配置全局缺省的输出渠道 -->
+    <root level="INFO">
+        <appender-ref ref="STDOUT"/>
+    </root>
+</configuration>
