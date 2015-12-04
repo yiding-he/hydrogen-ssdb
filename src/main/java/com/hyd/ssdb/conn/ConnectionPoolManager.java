@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * (description)
+ * 连接池管理类，通过计算拓扑结构来确定请求该使用哪个连接池
  * created at 15-12-3
  *
  * @author Yiding
@@ -19,7 +19,7 @@ public class ConnectionPoolManager {
 
     static final Logger LOG = LoggerFactory.getLogger(ConnectionPoolManager.class);
 
-    private Sharding sharding;
+    private Sharding sharding;  // 负载均衡拓扑结构
 
     private Map<Server, ConnectionPool> connectionPoolMap = new ConcurrentHashMap<Server, ConnectionPool>();
 

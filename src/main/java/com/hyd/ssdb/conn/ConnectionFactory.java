@@ -6,7 +6,8 @@ import org.apache.commons.pool2.PooledObjectFactory;
 import org.apache.commons.pool2.impl.DefaultPooledObject;
 
 /**
- * 创建 Connection 对象并检查其状态的工厂类
+ * 创建 Connection 对象并检查其状态的工厂类。
+ * 一个 ConnectionFactory 对象只针对一个 SSDB 服务器
  *
  * @author Yiding
  */
@@ -14,6 +15,11 @@ public class ConnectionFactory implements PooledObjectFactory<Connection> {
 
     private Server server;
 
+    /**
+     * 构造方法
+     *
+     * @param server 服务器配置
+     */
     public ConnectionFactory(Server server) {
         this.server = server;
     }

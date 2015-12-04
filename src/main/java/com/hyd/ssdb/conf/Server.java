@@ -16,17 +16,11 @@ public class Server {
 
     private String pass;            // 服务器校验密码（可选）
 
-    private boolean master = true;  // 是否是主服务器。如果只有这一台服务器，则忽略该参数
+    private boolean master = true;  // 是否是主服务器。
 
     private GenericObjectPoolConfig poolConfig = createDefaultPoolConfig();     // 连接池配置参数
 
     private SocketConfig socketConfig = new SocketConfig();     // 网络配置参数
-
-    private GenericObjectPoolConfig createDefaultPoolConfig() {
-        GenericObjectPoolConfig config = new GenericObjectPoolConfig();
-        config.setMaxIdle(1);
-        return config;
-    }
 
     public Server() {
     }
@@ -56,6 +50,12 @@ public class Server {
         this.master = master;
         this.socketConfig.setSoTimeout(soTimeout);
         this.poolConfig.setMaxTotal(poolMaxTotal);
+    }
+
+    private GenericObjectPoolConfig createDefaultPoolConfig() {
+        GenericObjectPoolConfig config = new GenericObjectPoolConfig();
+        config.setMaxIdle(1);
+        return config;
     }
 
     public GenericObjectPoolConfig getPoolConfig() {

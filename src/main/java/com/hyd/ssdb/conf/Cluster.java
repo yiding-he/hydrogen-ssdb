@@ -3,6 +3,7 @@ package com.hyd.ssdb.conf;
 import com.hyd.ssdb.SsdbClientException;
 
 import java.security.SecureRandom;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -14,15 +15,17 @@ import java.util.List;
  */
 public class Cluster {
 
-    private static final SecureRandom RANDOM = new SecureRandom();
-
     public static final int DEFAULT_WEIGHT = 100;
+
+    private static final SecureRandom RANDOM = new SecureRandom();
 
     ////////////////////////////////////////////////////////////////
 
     private String id = String.valueOf(hashCode());
 
     private List<Server> servers;
+
+    private List<Server> masters = new ArrayList<Server>();
 
     private int weight = DEFAULT_WEIGHT;
 
@@ -32,15 +35,16 @@ public class Cluster {
 
     public Cluster(List<Server> servers, int weight) {
 
-        servers.removeAll(Collections.singleton((Server)null));
+        servers.removeAll(Collections.singleton((Server) null));
         if (servers.isEmpty()) {
             throw new SsdbClientException("servers is empty");
         }
 
-        this.servers = Collections.unmodifiableList(servers);
+        this.servers = new ArrayList<Server>(servers);
         this.weight = weight;
-
         this.id = servers.get(0).getHost() + ":" + servers.get(0).getPort();
+
+        fillMasters();
     }
 
     public Cluster(Server server, int weight) {
@@ -53,6 +57,15 @@ public class Cluster {
 
     public Cluster(Server server) {
         this(server, DEFAULT_WEIGHT);
+    }
+
+    // 将主服务器加入到 masters 列表
+    private void fillMasters() {
+        for (Server server : servers) {
+            if (server.isMaster()) {
+                this.masters.add(server);
+            }
+        }
     }
 
     public String getId() {
@@ -88,28 +101,61 @@ public class Cluster {
     }
 
     public List<Server> getServers() {
-        return servers;
+        return Collections.unmodifiableList(servers);
     }
 
     /**
-     * 获取主服务器。如果只有一台服务器，则认定它是主服务器；否则必须有一台设置为 master=true
+     * 添加一台服务器
      *
-     * @return 主服务器，如果找不到则抛出异常
+     * @param server 要添加的服务器
      */
-    public Server getMaster() {
-        if (servers.size() == 1) {
-            return servers.get(0);
-        }
+    public void addServer(Server server) {
+        if (!servers.contains(server)) {
+            servers.add(server);
 
-        for (Server server : servers) {
-            if (server.isMaster()) {
-                return server;
+            if (server.isMaster() && !masters.contains(server)) {
+                masters.add(server);
             }
         }
-
-        throw new SsdbClientException("Unable to find master server in cluster '" + id + "'");
     }
 
+    /**
+     * 删除一台服务器
+     *
+     * @param server 要删除的服务器
+     */
+    public void removeServer(Server server) {
+        if (masters.contains(server)) {
+            masters.remove(server);
+        }
+
+        if (servers.contains(server)) {
+            servers.remove(server);
+        }
+    }
+
+    /**
+     * 获取一台主服务器（用于写入）。所有的服务器中必须至少有一台设置为 master=true
+     *
+     * @return 获取到的主服务器，如果找不到则抛出异常
+     */
+    public Server getMaster() {
+        if (masters.isEmpty()) {
+            throw new SsdbClientException("Unable to find master server in cluster '" + id + "'");
+        }
+
+        if (masters.size() == 1) {
+            return masters.get(0);
+        }
+
+        return masters.get(RANDOM.nextInt(masters.size()));
+    }
+
+    /**
+     * 获取一个随机的服务器（用于读取）
+     *
+     * @return 一个随机的服务器
+     */
     public Server getRandomServer() {
         if (servers.size() == 1) {
             return servers.get(0);

@@ -21,13 +21,11 @@ import java.util.Map;
  */
 public class Connection {
 
-    private Server server;
+    private Socket socket;      // 网络连接套接字
 
-    private Socket socket;
+    private boolean available;  // 是否已经不再可用
 
-    private boolean available;
-
-    private Map<String, Object> properties = new HashMap<String, Object>();
+    private Map<String, Object> properties = new HashMap<String, Object>();   // 其他属性
 
     public Connection(Server server) throws IOException {
         this.socket = new Socket(server.getHost(), server.getPort());
