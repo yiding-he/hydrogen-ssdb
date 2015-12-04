@@ -3,7 +3,7 @@ package com.hyd.ssdb.conf;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 
 /**
- * (description)
+ * 对一台具体的 SSDB 服务器的配置，包括地址、端口、校验密码和其他性能配置。
  * created at 15-12-3
  *
  * @author Yiding

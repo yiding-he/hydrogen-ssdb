@@ -7,7 +7,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * (description)
+ * 表示一个集群。集群是负载均衡的基本单位，一个集群里面可以配置一台或多台服务器（{@link Server}）。
  * created at 15-12-3
  *
  * @author Yiding

@@ -1,7 +1,7 @@
 package com.hyd.ssdb.conf;
 
 /**
- * (description)
+ * Socket 配置
  * created at 15-12-3
  *
  * @author Yiding
