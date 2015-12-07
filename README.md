@@ -1,11 +1,21 @@
 # hydrogen-ssdb
-Java 编写的 SSDB 客户端，支持负载均衡
+Java 编写的 SSDB 客户端
 
 _（底层架构已经完成，正在补充一些具体的命令）_
 
 ## 介绍
 
 hydrogen-ssdb 是一个 Java 编写的 [SSDB](https://github.com/ideawu/ssdb)  客户端，支持多线程并发请求和多服务器的负载均衡（客户端分发请求）。
+
+SSDB 是一个类似 Redis 的 NOSQL 数据库，兼容 Redis 协议，且内容占用小。
+
+hydrogen-ssdb 是一个 SSDB 客户端，具有以下特性：
+
+1. 易于配置，易于使用；
+1. 支持 SSDB 主从集群与负载均衡；
+1. 当集群中的服务器 down 掉时，能自动识别并跳过该服务器。
+
+更多特性正在添加当中。
 
 #### 【负载均衡的拓扑架构】
 
