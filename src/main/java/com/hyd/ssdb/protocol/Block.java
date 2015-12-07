@@ -16,10 +16,14 @@ public class Block {
     private byte[] data;
 
     public Block(String data) throws SsdbException {
-        try {
-            this.data = data.getBytes("UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            throw new SsdbException(e);
+        if (data == null || data.length() == 0) {
+            this.data = new byte[0];
+        } else {
+            try {
+                this.data = data.getBytes("UTF-8");
+            } catch (UnsupportedEncodingException e) {
+                throw new SsdbException(e);
+            }
         }
     }
 

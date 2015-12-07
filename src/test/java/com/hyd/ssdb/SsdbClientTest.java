@@ -3,13 +3,10 @@ package com.hyd.ssdb;
 import com.hyd.ssdb.protocol.Request;
 import com.hyd.ssdb.protocol.Response;
 import com.hyd.ssdb.util.KeyValue;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Random;
 
 import static org.junit.Assert.*;
 
@@ -19,19 +16,7 @@ import static org.junit.Assert.*;
  *
  * @author Yiding
  */
-public class SsdbClientTest {
-
-    private SsdbClient ssdbClient;
-
-    @Before
-    public void init() {
-        this.ssdbClient = new SsdbClient("192.168.1.180", 8888);
-    }
-
-    @After
-    public void finish() {
-        this.ssdbClient.close();
-    }
+public class SsdbClientTest extends BaseTest {
 
     ////////////////////////////////////////////////////////////////
 
@@ -258,7 +243,62 @@ public class SsdbClientTest {
         assertEquals("value1", ssdbClient.hget(key, "prop1"));
         assertEquals("value2", ssdbClient.hget(key, "prop2"));
 
-        List<String> keys = ssdbClient.hkeys(key, null, null, 100);
+        List<String> keys = ssdbClient.hkeys(key, "", "", 100);
         assertEquals(2, keys.size());
+    }
+
+    @Test
+    public void testZsetgetdelsize() throws Exception {
+        ssdbClient.zclear("zkey");
+        ssdbClient.zset("zkey", "user1", 123);
+        ssdbClient.zset("zkey", "user2", 456);
+        ssdbClient.zset("zkey", "user3", 789);
+
+        assertEquals(3, ssdbClient.zsize("zkey"));
+    }
+
+    @Test
+    public void testZlist() throws Exception {
+        ssdbClient.zclear("zkey");
+        ssdbClient.zset("zkey", "user1", 123);
+        List<String> keys = ssdbClient.zlist("", "", 100);
+        assertTrue(keys.contains("zkey"));
+    }
+
+    @Test
+    public void testZrank() throws Exception {
+        ssdbClient.zclear("zkey");
+        ssdbClient.zset("zkey", "user1", 123);
+        ssdbClient.zset("zkey", "user2", 456);
+        ssdbClient.zset("zkey", "user3", 789);
+
+        assertEquals(0, ssdbClient.zrank("zkey", "user1"));
+        assertEquals(1, ssdbClient.zrank("zkey", "user2"));
+        assertEquals(-1, ssdbClient.zrank("zkey", "user4"));
+    }
+
+    @Test
+    public void testZrange() throws Exception {
+        ssdbClient.zclear("zkey");
+        ssdbClient.zset("zkey", "user1", 123);
+        ssdbClient.zset("zkey", "user2", 456);
+        ssdbClient.zset("zkey", "user3", 789);
+
+        List<KeyValue> keyValues = ssdbClient.zrange("zkey", 0, 2);
+        assertEquals(2, keyValues.size());
+        assertEquals("user1", keyValues.get(0).getKey());
+        assertEquals("456", keyValues.get(1).getValue());
+    }
+
+    @Test
+    public void testZcount() throws Exception {
+        ssdbClient.zclear("zkey");
+        ssdbClient.zset("zkey", "user1", 123);
+        ssdbClient.zset("zkey", "user2", 456);
+        ssdbClient.zset("zkey", "user3", 789);
+
+        assertEquals(1, ssdbClient.zcount("zkey", 100, 200));
+        assertEquals(2, ssdbClient.zcount("zkey", 100, 500));
+        assertEquals(3, ssdbClient.zcount("zkey", Integer.MIN_VALUE, Integer.MAX_VALUE));
     }
 }

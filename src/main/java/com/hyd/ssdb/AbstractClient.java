@@ -8,6 +8,7 @@ import com.hyd.ssdb.conn.PoolAndConnection;
 import com.hyd.ssdb.protocol.Request;
 import com.hyd.ssdb.protocol.Response;
 import com.hyd.ssdb.protocol.WriteRequest;
+import com.hyd.ssdb.util.IdScore;
 import com.hyd.ssdb.util.KeyValue;
 import org.slf4j.LoggerFactory;
 
@@ -120,7 +121,7 @@ public abstract class AbstractClient {
             byte[] respBytes = connection.receivePacket();
 
             Response response = new Response(respBytes);
-            checkResponse(response);
+            checkResponse(request.getHeader().toString(), response);
             return response;
 
         } catch (SsdbException e) {
@@ -167,9 +168,9 @@ public abstract class AbstractClient {
     }
 
     // 检查服务器回应，如果是错误回应则抛出一个异常
-    private void checkResponse(Response response) {
+    private void checkResponse(String requestHeader, Response response) {
         String header = response.getHeader();
-        LOG.debug("RESPONSE: [" + header + "] - " + response.getBlocks());
+        LOG.debug("RESPONSE(" + requestHeader + "): [" + header + "] - " + response.getBlocks());
 
         if (!(header.equals("ok") || header.equals("not_found"))) {
             SsdbException e = new SsdbException("Server return error: '" + header + "'");
@@ -225,6 +226,20 @@ public abstract class AbstractClient {
             KeyValue keyValue = keyValues.get(i);
             command[i * 2 + 2] = keyValue.getKey();
             command[i * 2 + 3] = keyValue.getValue();
+        }
+        return command;
+    }
+
+    // 将 token1，token2 和 idScores 组合成一个字符串数组
+    protected String[] prependCommandIdScore(String token1, String token2, List<IdScore> idScores) {
+        String[] command = new String[idScores.size() * 2 + 2];
+        command[0] = token1;
+        command[1] = token2;
+
+        for (int i = 0; i < idScores.size(); i++) {
+            IdScore idScore = idScores.get(i);
+            command[i * 2 + 2] = idScore.getId();
+            command[i * 2 + 3] = String.valueOf(idScore.getScore());
         }
         return command;
     }

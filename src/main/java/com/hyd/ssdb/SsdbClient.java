@@ -3,14 +3,12 @@ package com.hyd.ssdb;
 import com.hyd.ssdb.conf.Server;
 import com.hyd.ssdb.conf.Sharding;
 import com.hyd.ssdb.protocol.Response;
+import com.hyd.ssdb.util.IdScore;
 import com.hyd.ssdb.util.KeyValue;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-
-import static com.hyd.ssdb.Restrictions.N_INF;
-import static com.hyd.ssdb.Restrictions.P_INF;
 
 /**
  * 包含连接池的客户端类，对于一个 SSDB 服务器只需要创建一个 SsdbClient 客户端。
@@ -105,6 +103,12 @@ public class SsdbClient extends AbstractClient {
         return sendRequest("ttl", key).getIntResult();
     }
 
+    /**
+     * 删除一个或多个 key，注意这个方法对 zlist 无效，zlist 需要调用
+     * {@link #zclear(String)} 方法
+     *
+     * @param keys 要删除的 key
+     */
     public void del(String... keys) {
         if (keys.length == 1) {
             sendWriteRequest("del", keys[0]);
@@ -248,20 +252,14 @@ public class SsdbClient extends AbstractClient {
     }
 
     public List<KeyValue> hlist(String key, String startExclude, String endInclude, int limit) {
-        startExclude = def(startExclude, N_INF);
-        endInclude = def(endInclude, P_INF);
         return sendRequest("hlist", key, startExclude, endInclude, limit).getKeyValues();
     }
 
     public List<KeyValue> hrlist(String key, String startExclude, String endInclude, int limit) {
-        startExclude = def(startExclude, N_INF);
-        endInclude = def(endInclude, P_INF);
         return sendRequest("hrlist", key, startExclude, endInclude, limit).getKeyValues();
     }
 
     public List<String> hkeys(String key, String startExclude, String endInclude, int limit) {
-        startExclude = def(startExclude, N_INF);
-        endInclude = def(endInclude, P_INF);
         return sendRequest("hkeys", key, startExclude, endInclude, limit).getBlocks();
     }
 
@@ -274,14 +272,10 @@ public class SsdbClient extends AbstractClient {
     }
 
     public List<KeyValue> hscan(String key, String startExclude, String endInclude, int limit) {
-        startExclude = def(startExclude, N_INF);
-        endInclude = def(endInclude, P_INF);
         return sendRequest("hscan", key, startExclude, endInclude, limit).getKeyValues();
     }
 
     public List<KeyValue> hrscan(String key, String startExclude, String endInclude, int limit) {
-        startExclude = def(startExclude, N_INF);
-        endInclude = def(endInclude, P_INF);
         return sendRequest("hrscan", key, startExclude, endInclude, limit).getKeyValues();
     }
 
@@ -316,5 +310,134 @@ public class SsdbClient extends AbstractClient {
 
     //////////////////////////////////////////////////////////////// sorted set
 
+    public void zset(String key, String id, long score) {
+        sendWriteRequest("zset", key, id, score);
+    }
 
+    public long zget(String key, String id) {
+        return sendRequest("zget", key, id).getLongResult();
+    }
+
+    public void zdel(String key, String id) {
+        sendWriteRequest("zdel", key, id);
+    }
+
+    public long zincr(String key, String id, long incr) {
+        return sendWriteRequest("zincr", key, id, incr).getLongResult();
+    }
+
+    public int zsize(String key) {
+        return sendRequest("zsize", key).getIntResult();
+    }
+
+    public int zclear(String key) {
+        return sendWriteRequest("zclear", key).getIntResult();
+    }
+
+    public List<String> zlist(String startExclude, String endInclude, int limit) {
+        return sendRequest("zlist", startExclude, endInclude, limit).getBlocks();
+    }
+
+    public List<String> zkeys(String key, String startExclude, String endInclude, int limit) {
+        return sendRequest("zkeys", key, startExclude, endInclude, limit).getBlocks();
+    }
+
+    public List<IdScore> zscan(String key, String startExclude, String endInclude, int limit) {
+        return sendRequest("zscan", key, startExclude, endInclude, limit).getIdScores();
+    }
+
+    public List<IdScore> zrscan(String key, String startExclude, String endInclude, int limit) {
+        return sendRequest("zrscan", key, startExclude, endInclude, limit).getIdScores();
+    }
+
+    /**
+     * 获取 id 的排名，从小到大，0 表示第一位
+     *
+     * @param key id 所处的 zset 的 key
+     * @param id  id
+     *
+     * @return 排名，如果 id 不在 key 当中则返回 -1
+     */
+    public int zrank(String key, String id) {
+        return sendRequest("zrank", key, id).getIntResult();
+    }
+
+    // 同上，从大到小排名
+    public int zrrank(String key, String id) {
+        return sendRequest("zrrank", key, id).getIntResult();
+    }
+
+    public List<IdScore> zrange(String key, int offset, int limit) {
+        return sendRequest("zrange", key, offset, limit).getIdScores();
+    }
+
+    public List<IdScore> zrrange(String key, int offset, int limit) {
+        return sendRequest("zrrange", key, offset, limit).getIdScores();
+    }
+
+    /**
+     * 查询 score 在 minScoreInclude 与 maxScoreInclude 之间的 id 数量
+     *
+     * @param key             zset 的 key
+     * @param minScoreInclude score 最小值（含），Integer.MIN_VALUE 表示无最小值
+     * @param maxScoreInclude score 最大值（含），Integer.MAX_VALUE 表示无最大值
+     *
+     * @return score 在 minScoreInclude 与 maxScoreInclude 之间的 id 数量
+     */
+    public int zcount(String key, int minScoreInclude, int maxScoreInclude) {
+        String strMin = minScoreInclude == Integer.MIN_VALUE ? "" : String.valueOf(minScoreInclude);
+        String strMax = maxScoreInclude == Integer.MAX_VALUE ? "" : String.valueOf(maxScoreInclude);
+        return sendRequest("zcount", key, strMin, strMax).getIntResult();
+    }
+
+    public long zsum(String key, int minScoreInclude, int maxScoreInclude) {
+        String strMin = minScoreInclude == Integer.MIN_VALUE ? "" : String.valueOf(minScoreInclude);
+        String strMax = maxScoreInclude == Integer.MAX_VALUE ? "" : String.valueOf(maxScoreInclude);
+        return sendRequest("zsum", key, strMin, strMax).getLongResult();
+    }
+
+    public long zavg(String key, int minScoreInclude, int maxScoreInclude) {
+        String strMin = minScoreInclude == Integer.MIN_VALUE ? "" : String.valueOf(minScoreInclude);
+        String strMax = maxScoreInclude == Integer.MAX_VALUE ? "" : String.valueOf(maxScoreInclude);
+        return sendRequest("zavg", key, strMin, strMax).getLongResult();
+    }
+
+    /**
+     * 删除指定排名范围内的 id
+     *
+     * @param key            zset 的 key
+     * @param minRankInclude 最小排名（含），最小值为 0
+     * @param maxRankInclude 最大排名（含），最大值为 zset 的大小
+     *
+     * @return 被删除的 id 的数量
+     */
+    public int zremrangebyrank(String key, int minRankInclude, int maxRankInclude) {
+        return sendWriteRequest("zremrangebyrank", key, minRankInclude, maxRankInclude).getIntResult();
+    }
+
+    public int zremrangebyscore(String key, int minScoreInclude, int maxScoreInclude) {
+        String strMin = minScoreInclude == Integer.MIN_VALUE ? "" : String.valueOf(minScoreInclude);
+        String strMax = maxScoreInclude == Integer.MAX_VALUE ? "" : String.valueOf(maxScoreInclude);
+        return sendWriteRequest("zremrangebyscore", key, strMin, strMax).getIntResult();
+    }
+
+    public List<IdScore> zpopFront(String key, int limit) {
+        return sendWriteRequest("zpop_front", key, limit).getIdScores();
+    }
+
+    public List<IdScore> zpopBack(String key, int limit) {
+        return sendWriteRequest("zpop_back", key, limit).getIdScores();
+    }
+
+    public void multiZset(String key, List<IdScore> idScores) {
+        sendWriteRequest(prependCommandIdScore("multi_zset", key, idScores));
+    }
+
+    public List<IdScore> multiZget(String key, List<String> ids) {
+        return sendRequest(prependCommand("multi_zget", key, ids)).getIdScores();
+    }
+
+    public void multiZdel(String key, List<String> ids) {
+        sendWriteRequest(prependCommand("multi_zdel", key, ids));
+    }
 }

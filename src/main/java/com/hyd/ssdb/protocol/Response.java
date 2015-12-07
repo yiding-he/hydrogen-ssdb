@@ -1,5 +1,6 @@
 package com.hyd.ssdb.protocol;
 
+import com.hyd.ssdb.util.IdScore;
 import com.hyd.ssdb.util.KeyValue;
 
 import java.io.ByteArrayInputStream;
@@ -67,8 +68,17 @@ public class Response {
         return blocks.isEmpty() ? null : blocks.get(0);
     }
 
+    /**
+     * 获得 int 类型的返回值
+     *
+     * @return 如果回应的内容是没有找到，则返回 -1，否则返回回应的内容
+     */
     public int getIntResult() {
-        return Integer.parseInt(firstBlock());
+        if (header.equals("not_found")) {
+            return -1;
+        } else {
+            return Integer.parseInt(firstBlock());
+        }
     }
 
     public long getLongResult() {
@@ -85,6 +95,18 @@ public class Response {
         }
 
         return keyValues;
+    }
+
+    public List<IdScore> getIdScores() {
+        List<IdScore> idScores = new ArrayList<IdScore>();
+
+        for (int i = 0; i + 1 < blocks.size(); i += 2) {
+            String key = blocks.get(i);
+            String value = blocks.get(i + 1);
+            idScores.add(new IdScore(key, Integer.parseInt(value)));
+        }
+
+        return idScores;
     }
 
     public Map<String, String> getBlocksAsMap() {
