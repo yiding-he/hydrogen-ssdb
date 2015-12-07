@@ -1,6 +1,8 @@
 package com.hyd.ssdb.conf;
 
 import com.hyd.ssdb.SsdbClientException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.security.SecureRandom;
 import java.util.ArrayList;
@@ -9,6 +11,9 @@ import java.util.List;
 
 /**
  * 表示一个集群。集群是负载均衡的基本单位，一个集群里面可以配置一台或多台服务器（{@link Server}）。
+ * 这个类里面几个方法标上了 synchronized，考虑到：一个 Cluster 最多只会包含几台十几台服务器，
+ * synchronized 方法执行速度会很快，而且服务器的变更不会很频繁，所以没有使用复杂的同步方式。
+ * fillMasters() 方法没有加上 synchronized 是因为它在构造方法中执行，Cluster 的构造方法不会被多线程访问。
  * created at 15-12-3
  *
  * @author Yiding
@@ -16,6 +21,8 @@ import java.util.List;
 public class Cluster {
 
     public static final int DEFAULT_WEIGHT = 100;
+
+    static final Logger LOG = LoggerFactory.getLogger(Cluster.class);
 
     private static final SecureRandom RANDOM = new SecureRandom();
 
@@ -26,6 +33,8 @@ public class Cluster {
     private List<Server> servers;
 
     private List<Server> masters = new ArrayList<Server>();
+
+    private List<Server> invalidServers = new ArrayList<Server>();
 
     private int weight = DEFAULT_WEIGHT;
 
@@ -109,7 +118,7 @@ public class Cluster {
      *
      * @param server 要添加的服务器
      */
-    public void addServer(Server server) {
+    public synchronized void addServer(Server server) {
         if (!servers.contains(server)) {
             servers.add(server);
 
@@ -124,7 +133,7 @@ public class Cluster {
      *
      * @param server 要删除的服务器
      */
-    public void removeServer(Server server) {
+    public synchronized void removeServer(Server server) {
         if (masters.contains(server)) {
             masters.remove(server);
         }
@@ -162,5 +171,21 @@ public class Cluster {
         }
 
         return servers.get(RANDOM.nextInt(servers.size()));
+    }
+
+    /**
+     * 将服务器标记为无效的
+     *
+     * @param invalid 需要被标记的服务器
+     */
+    public synchronized void markInvalid(Server invalid) {
+        LOG.debug("Removing invalid server " + invalid);
+
+        this.servers.remove(invalid);
+        this.masters.remove(invalid);
+
+        if (!this.invalidServers.contains(invalid)) {
+            this.invalidServers.add(invalid);
+        }
     }
 }

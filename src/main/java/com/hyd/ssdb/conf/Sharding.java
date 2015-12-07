@@ -84,6 +84,16 @@ public class Sharding {
         return clusters;
     }
 
+    public Cluster getClusterById(String id) {
+        for (Cluster cluster : clusters) {
+            if (cluster.getId().equals(id)) {
+                return cluster;
+            }
+        }
+
+        return null;
+    }
+
     // 对服务器节点构建一个 Hash 环，每一个 Key 都在环当中的某个位置上
     private void setupHashRing() {
 
@@ -129,7 +139,7 @@ public class Sharding {
      *
      * @return key 所属的集群
      */
-    public Cluster getCluster(String key) {
+    public Cluster getClusterByKey(String key) {
 
         if (clusters.size() == 1) {
             return clusters.get(0);

@@ -1,12 +1,11 @@
 package com.hyd.ssdb;
 
-import com.hyd.ssdb.conf.Cluster;
 import com.hyd.ssdb.conf.Server;
 import com.hyd.ssdb.conf.Sharding;
-import com.hyd.ssdb.conn.ConnectionFactory;
 import com.hyd.ssdb.protocol.Response;
 import com.hyd.ssdb.util.KeyValue;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -135,7 +134,9 @@ public class SsdbClient extends AbstractClient {
     }
 
     public int getbit(String key, long offset) {
-        return sendRequest("getbit", key, offset).getIntResult(); // TODO ssdb 的这个命令有 BUG，返回值的顺序是反的
+        // TO-not-DO ssdb 的这个命令有 BUG，返回值的顺序是反的
+        // 这个问题已经无法修复了
+        return sendRequest("getbit", key, offset).getIntResult();
     }
 
     public int setbit(String key, long offset) {
@@ -298,16 +299,22 @@ public class SsdbClient extends AbstractClient {
     }
 
     public void multiHset(String key, List<KeyValue> props) {
-        String[] command = new String[props.size() * 2 + 2];
-        command[0] = "multi_hset";
-        command[1] = key;
-
-        for (int i = 0; i < props.size(); i++) {
-            KeyValue keyValue = props.get(i);
-            command[i * 2 + 2] = keyValue.getKey();
-            command[i * 2 + 3] = keyValue.getValue();
-        }
-
-        sendWriteRequest((Object[]) command);
+        sendWriteRequest((Object[]) prependCommandKeyValue("multi_hset", key, props));
     }
+
+    public List<KeyValue> multiHget(String key, String... propNames) {
+        return multiHget(key, Arrays.asList(propNames));
+    }
+
+    public List<KeyValue> multiHget(String key, List<String> propNames) {
+        return sendRequest((Object[]) prependCommand("multi_hget", key, propNames)).getKeyValues();
+    }
+
+    public void multiHdel(String key, String... propNames) {
+        sendWriteRequest((Object[]) prependCommand("multi_hdel", key, propNames));
+    }
+
+    //////////////////////////////////////////////////////////////// sorted set
+
+
 }

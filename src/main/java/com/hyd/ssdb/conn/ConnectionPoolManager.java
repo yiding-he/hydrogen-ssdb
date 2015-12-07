@@ -1,5 +1,8 @@
 package com.hyd.ssdb.conn;
 
+import com.hyd.ssdb.SsdbClientException;
+import com.hyd.ssdb.SsdbNoServerAvailableException;
+import com.hyd.ssdb.SsdbSocketFailedException;
 import com.hyd.ssdb.conf.Cluster;
 import com.hyd.ssdb.conf.Server;
 import com.hyd.ssdb.conf.Sharding;
@@ -10,7 +13,11 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * 连接池管理类，通过计算拓扑结构来确定请求该使用哪个连接池
+ * NetworkManager 有两个职责：
+ * 1、管理网络的拓扑结构（通过 Sharding 类），决定请求发送到哪个 SSDB 服务器；
+ * 2、当请求发送失败时，自动更新失效的服务器列表，并尝试重新发送请求到同一
+ * Cluster 的其他服务器，直到没有服务器可用，才抛出异常。
+ * <p/>
  * created at 15-12-3
  *
  * @author Yiding
@@ -27,10 +34,52 @@ public class ConnectionPoolManager {
         this.sharding = sharding;
     }
 
+    /**
+     * 根据 key 和操作类型获得一个服务器的连接池。
+     *
+     * @param key
+     * @param write
+     *
+     * @return
+     */
     public ConnectionPool getConnectionPool(String key, boolean write) {
-        Cluster cluster = sharding.getCluster(key);
-        // LOG.debug("key {} related to cluster {}", key, cluster.getId());
+        Cluster cluster = sharding.getClusterByKey(key);
         return pickServer(cluster, write);
+    }
+
+    /**
+     * 根据 key 和操作类型获取一个连接。如果 Cluster 的某个服务器无法创建连接，则自动切换
+     * 到其他可用的服务器；如果所有的服务器都不可用，则抛出 SsdbNoServerAvailableException
+     *
+     * @param key key
+     * @param write 是否是写入操作
+     *
+     * @return 连接和连接池
+     */
+    public PoolAndConnection getConnection(String key, boolean write)
+            throws SsdbNoServerAvailableException {
+        boolean retry = false;
+        do {
+            Cluster cluster = sharding.getClusterByKey(key);
+            ConnectionPool connectionPool = null;
+            try {
+                connectionPool = pickServer(cluster, write);
+                Connection connection = connectionPool.borrowObject();
+                return new PoolAndConnection(connectionPool, connection);
+
+            } catch (SsdbSocketFailedException e) { // 表示连接创建失败
+                if (connectionPool != null) {
+                    Server server = connectionPool.getConnectionFactory().getServer();
+                    // 将服务器标记为不可用，这样下次 do-while 循环就会跳过该服务器
+                    reportInvalidConnection(server.getHost(), server.getPort());
+                    retry = true;
+                }
+            } catch (Exception e) {
+                throw new SsdbClientException(e);
+            }
+        } while (retry);
+
+        throw new SsdbClientException("should not be here");
     }
 
     /**
@@ -74,6 +123,19 @@ public class ConnectionPoolManager {
             } catch (Exception e) {
                 LOG.error("Error closing connection pool", e);
             }
+        }
+    }
+
+    public void reportInvalidConnection(Connection connection) {
+        String host = connection.getProperty("host");
+        Integer port = connection.getProperty("port");
+        reportInvalidConnection(host, port);
+    }
+
+    public void reportInvalidConnection(String host, int port) {
+        Server toInvalidate = new Server(host, port);
+        for (Cluster cluster : sharding.getClusters()) {
+            cluster.markInvalid(toInvalidate);
         }
     }
 }

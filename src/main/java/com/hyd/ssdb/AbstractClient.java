@@ -4,10 +4,14 @@ import com.hyd.ssdb.conf.Sharding;
 import com.hyd.ssdb.conn.Connection;
 import com.hyd.ssdb.conn.ConnectionPool;
 import com.hyd.ssdb.conn.ConnectionPoolManager;
+import com.hyd.ssdb.conn.PoolAndConnection;
 import com.hyd.ssdb.protocol.Request;
 import com.hyd.ssdb.protocol.Response;
 import com.hyd.ssdb.protocol.WriteRequest;
+import com.hyd.ssdb.util.KeyValue;
 import org.slf4j.LoggerFactory;
+
+import java.util.List;
 
 /**
  * 首先 SsdbClient 的一些底层方法
@@ -67,22 +71,46 @@ public abstract class AbstractClient {
     public Response sendRequest(Request request) {
         String key = request.getKey();
         boolean write = request instanceof WriteRequest;
-        ConnectionPool connectionPool = connectionPoolManager.getConnectionPool(key, write);
+        boolean needResend = false;
+        Response response = null;
 
-        Connection connection = null;
-        try {
-            connection = getConnection(connectionPool);
-            return sendRequest(request, connection);
-        } catch (SsdbException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new SsdbException(e);
-        } finally {
-            if (connection != null) {
-                connectionPool.returnObject(connection);  // 把连接返回给连接池
+        // 这是一个在失败时重新发送请求的循环。
+        // 发送请求会遇到下面几种失败情况，分别有对应的 catch 块：
+        // 1、无法获得 Connection，这时候会遇到 SsdbNoServerAvailableException 异常，直接抛出；
+        // 2、能够获得 Connection，但执行收发时出错，这时候会遇到
+        //    SsdbSocketFailedException 异常，需要标记服务器为不可用，并重新尝试循环；
+        // 3、执行收发完成，但服务器返回的是错误信息，这时候会遇到 SsdbServerException 异常，直接抛出。
+        // 4、其他 SsdbException 或 Exception 异常，表示代码逻辑可能存在问题，直接抛出或包装后抛出。
+        do {
+            PoolAndConnection poolAndConnection = connectionPoolManager.getConnection(key, write);
+            ConnectionPool connectionPool = null;
+            Connection connection = null;
+            try {
+                connectionPool = poolAndConnection.getConnectionPool();
+                connection = poolAndConnection.getConnection();
+                response = sendRequest(request, connection);
+                needResend = false;
+            } catch (SsdbNoServerAvailableException e) {
+                throw e;
+            } catch (SsdbClientException e) {
+
+                // 标记不可用的服务器，这样下次调用 getConnectionPool() 就会切换到其他服务器了
+                connectionPoolManager.reportInvalidConnection(connection);
+                needResend = true;
+            } catch (SsdbServerException e) {
+                throw e;
+            } catch (SsdbException e) {
+                throw e;
+            } catch (Exception e) {
+                throw new SsdbException(e);
+            } finally {
+                if (connection != null) {
+                    connectionPool.returnObject(connection);  // 把连接返回给连接池
+                }
             }
-        }
+        } while (needResend);
 
+        return response;
     }
 
     // 发送一个命令，但不会把连接返回给连接池（内部使用）
@@ -179,6 +207,25 @@ public abstract class AbstractClient {
         command[0] = token1;
         command[1] = token2;
         System.arraycopy(parameters, 0, command, 2, parameters.length);
+        return command;
+    }
+
+    // 将 token1，token2 和 parameters 组合成一个字符串数组
+    protected String[] prependCommand(String token1, String token2, List<String> parameters) {
+        return prependCommand(token1, token2, parameters.toArray(new String[parameters.size()]));
+    }
+
+    // 将 token1，token2 和 keyValues 组合成一个字符串数组
+    protected String[] prependCommandKeyValue(String token1, String token2, List<KeyValue> keyValues) {
+        String[] command = new String[keyValues.size() * 2 + 2];
+        command[0] = token1;
+        command[1] = token2;
+
+        for (int i = 0; i < keyValues.size(); i++) {
+            KeyValue keyValue = keyValues.get(i);
+            command[i * 2 + 2] = keyValue.getKey();
+            command[i * 2 + 3] = keyValue.getValue();
+        }
         return command;
     }
 

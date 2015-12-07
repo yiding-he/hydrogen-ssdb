@@ -1,6 +1,8 @@
 package com.hyd.ssdb;
 
+import com.hyd.ssdb.conf.Server;
 import com.hyd.ssdb.conn.Connection;
+import com.hyd.ssdb.conn.ConnectionPool;
 import com.hyd.ssdb.protocol.Request;
 import com.hyd.ssdb.protocol.Response;
 import org.junit.Test;
@@ -31,5 +33,11 @@ public class ConnectionTest {
         System.out.println(response.getBlocks());
 
         connection.close();
+    }
+
+    @Test(expected = SsdbSocketFailedException.class)
+    public void testConnectionFail() throws Exception {
+        ConnectionPool connectionPool = new ConnectionPool(new Server("localhost", 12345));
+        connectionPool.borrowObject();
     }
 }

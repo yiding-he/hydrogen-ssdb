@@ -1,6 +1,7 @@
 package com.hyd.ssdb.conn;
 
 import com.hyd.ssdb.SsdbException;
+import com.hyd.ssdb.SsdbSocketFailedException;
 import com.hyd.ssdb.conf.Server;
 
 import java.io.ByteArrayOutputStream;
@@ -27,16 +28,28 @@ public class Connection {
 
     private Map<String, Object> properties = new HashMap<String, Object>();   // 其他属性
 
-    public Connection(Server server) throws IOException {
-        this.socket = new Socket(server.getHost(), server.getPort());
-        this.socket.setSoTimeout(server.getSocketConfig().getSoTimeout());
-        this.available = true;
+    public Connection(Server server) {
+        this(server.getHost(), server.getPort(), server.getSocketConfig().getSoTimeout());
     }
 
-    public Connection(String host, int port, int soTimeout) throws IOException {
-        this.socket = new Socket(host, port);
-        this.socket.setSoTimeout(soTimeout);
-        this.available = true;
+    public Connection(String host, int port, int soTimeout) {
+        try {
+            this.socket = new Socket(host, port);
+            this.socket.setSoTimeout(soTimeout);
+            this.available = true;
+            this.setProperty("host", host);
+            this.setProperty("port", port);
+        } catch (IOException e) {
+            throw new SsdbSocketFailedException(e);
+        }
+    }
+
+    public String getHost() {
+        return this.getProperty("host");
+    }
+
+    public int getPort() {
+        return (Integer) this.getProperty("port");
     }
 
     @SuppressWarnings("unchecked")
@@ -56,18 +69,18 @@ public class Connection {
         this.properties.remove(propName);
     }
 
-    public void send(byte[] bytes) throws IOException {
+    public void send(byte[] bytes) {
         try {
             OutputStream outputStream = this.socket.getOutputStream();
             outputStream.write(bytes);
             outputStream.flush();
         } catch (IOException e) {
             this.available = false;
-            throw e;
+            throw new SsdbSocketFailedException(e);
         }
     }
 
-    public byte[] receivePacket() throws IOException {
+    public byte[] receivePacket() {
 
         ByteArrayOutputStream bos = null;
 
@@ -101,9 +114,9 @@ public class Connection {
                 } else {
                     if (status == 0) {
                         status = 1;
-                        numSb.append((char)b);
+                        numSb.append((char) b);
                     } else if (status == 1) {
-                        numSb.append((char)b);
+                        numSb.append((char) b);
                     } else if (status == 2) {
                         dataCounter += 1;
                         if (dataCounter >= dataLength) {
@@ -119,11 +132,11 @@ public class Connection {
             throw new SsdbException("Invalid packet");
         } catch (SocketTimeoutException e) {
             this.available = false;
-            throw new SsdbException("Socket timed out, already read: " +
-                    (bos == null? "": new String(bos.toByteArray())));
+            throw new SsdbSocketFailedException("Socket timed out, already read: " +
+                    (bos == null ? "" : new String(bos.toByteArray())), e);
         } catch (IOException e) {
             this.available = false;
-            throw e;
+            throw new SsdbSocketFailedException(e);
         } catch (SsdbException e) {
             this.available = false;
             throw e;
@@ -136,5 +149,10 @@ public class Connection {
 
     public boolean isAvailable() {
         return this.available;
+    }
+
+    @Override
+    public String toString() {
+        return "Connection{host='" + getHost() + "',port=" + getPort() + ",available=" + this.available + "}";
     }
 }

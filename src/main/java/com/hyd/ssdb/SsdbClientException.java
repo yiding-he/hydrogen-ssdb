@@ -1,7 +1,7 @@
 package com.hyd.ssdb;
 
 /**
- * (description)
+ * 表示发生在客户端的异常，包括服务器无法连接、收发失败或协议格式不正确等
  * created at 15-12-4
  *
  * @author Yiding

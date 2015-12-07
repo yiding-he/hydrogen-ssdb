@@ -51,14 +51,14 @@ public class ShardingTest {
     }
 
     private void chooseCluster(Sharding sharding, String key) {
-        Cluster c = sharding.getCluster(key);
+        Cluster c = sharding.getClusterByKey(key);
         outputCluster(c);
     }
 
     @Test
     public void testSingleServer() throws Exception {
         Sharding sharding = Sharding.fromSingleServer("host", 1234);
-        Cluster cluster = sharding.getCluster("key");
+        Cluster cluster = sharding.getClusterByKey("key");
         outputCluster(cluster);
     }
 }

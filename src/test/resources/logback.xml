@@ -9,7 +9,7 @@
     </appender>
     <!--////////////////////////////////////////////////////////////-->
     <!-- 配置全局缺省的输出渠道 -->
-    <root level="INFO">
+    <root level="DEBUG">
         <appender-ref ref="STDOUT"/>
     </root>
 </configuration>

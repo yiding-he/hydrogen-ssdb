@@ -105,4 +105,33 @@ public class Server {
     public void setPass(String pass) {
         this.pass = pass;
     }
+
+    @SuppressWarnings("SimplifiableIfStatement")
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Server)) return false;
+
+        Server server = (Server) o;
+
+        if (getPort() != server.getPort()) return false;
+        return getHost().equals(server.getHost());
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = getHost().hashCode();
+        result = 31 * result + getPort();
+        return result;
+    }
+
+    @Override
+    public String toString() {
+        return "Server{" +
+                "host='" + host + '\'' +
+                ", port=" + port +
+                ", master=" + master +
+                '}';
+    }
 }

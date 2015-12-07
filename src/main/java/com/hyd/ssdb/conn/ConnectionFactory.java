@@ -4,6 +4,8 @@ import com.hyd.ssdb.conf.Server;
 import org.apache.commons.pool2.PooledObject;
 import org.apache.commons.pool2.PooledObjectFactory;
 import org.apache.commons.pool2.impl.DefaultPooledObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 创建 Connection 对象并检查其状态的工厂类。
@@ -12,6 +14,8 @@ import org.apache.commons.pool2.impl.DefaultPooledObject;
  * @author Yiding
  */
 public class ConnectionFactory implements PooledObjectFactory<Connection> {
+
+    static final Logger LOG = LoggerFactory.getLogger(ConnectionFactory.class);
 
     private Server server;
 
@@ -29,6 +33,7 @@ public class ConnectionFactory implements PooledObjectFactory<Connection> {
     }
 
     public PooledObject<Connection> makeObject() throws Exception {
+        LOG.debug("Creating connection with " + server);
         return new DefaultPooledObject<Connection>(new Connection(server));
     }
 
