@@ -23,6 +23,15 @@ hydrogen-ssdb 是一个 SSDB 客户端，具有以下特性：
 
 ![](https://cloud.githubusercontent.com/assets/900606/11584478/2c30724c-9a9f-11e5-8fa2-3917230a227b.png)
 
+####【单点故障】
+
+在负载均衡当中，每个节点都负责整个一致性哈希环中的一部分（称为哈希段）。当负载均衡当中出现单点故障时，故障节点对应的哈希段将无法执行存取操作，因此有两种处理方式：
+
+1. 故障节点前面的节点自动接管该哈希段。这种方式适用于将 SSDB 用于缓存，因为缓存丢失是可以重新填充的；
+2. 保留哈希段的故障状态，直到故障节点恢复。这种方式适用于将 SSDB 用于数据库，这样能严格保证一个 key 会保存在对应的节点中。
+
+（hydrogen-ssdb 将会允许客户端选择使用这两种处理方式中的任意一种，该特性正在实现当中）
+
 ##项目依赖
 
 hydrogen-ssdb 依赖于下面两个框架：
@@ -37,6 +46,8 @@ hydrogen-ssdb 依赖于下面两个框架：
 ```java
 SsdbClient client = new SsdbClient(host, port);
 client.set("key", "value");
+System.out.println(client.get("key"));   // output "value"
+client.close();    // 应用停止时需要调用 close() 方法，也可以配置在 Spring 的 destroy-method 中
 ```
 
 #### 配置主从服务器
