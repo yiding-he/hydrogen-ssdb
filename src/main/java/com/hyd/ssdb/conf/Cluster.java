@@ -1,6 +1,7 @@
 package com.hyd.ssdb.conf;
 
 import com.hyd.ssdb.SsdbClientException;
+import com.hyd.ssdb.SsdbNoServerAvailableException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,8 +33,6 @@ public class Cluster {
     private List<Server> masters = new ArrayList<Server>();
     private List<Server> invalidServers = new ArrayList<Server>();
     private int weight = DEFAULT_WEIGHT;
-    private int minHash = Integer.MIN_VALUE;
-    private int maxHash = Integer.MAX_VALUE;
 
     public Cluster(List<Server> servers, int weight) {
 
@@ -86,22 +85,6 @@ public class Cluster {
         this.id = id;
     }
 
-    public int getMinHash() {
-        return minHash;
-    }
-
-    public void setMinHash(int minHash) {
-        this.minHash = minHash;
-    }
-
-    public int getMaxHash() {
-        return maxHash;
-    }
-
-    public void setMaxHash(int maxHash) {
-        this.maxHash = maxHash;
-    }
-
     public int getWeight() {
         return weight;
     }
@@ -151,7 +134,8 @@ public class Cluster {
      */
     public Server getMaster() {
         if (masters.isEmpty()) {
-            throw new SsdbClientException("Unable to find master server in cluster '" + id + "'");
+            throw new SsdbNoServerAvailableException(
+                    "Unable to find master server in cluster '" + id + "'");
         }
 
         if (masters.size() == 1) {
@@ -167,6 +151,11 @@ public class Cluster {
      * @return 一个随机的服务器
      */
     public Server getRandomServer() {
+        if (servers.isEmpty()) {
+            throw new SsdbNoServerAvailableException(
+                    "Unable to find server in cluster '" + id + "'");
+        }
+
         if (servers.size() == 1) {
             return servers.get(0);
         }
@@ -188,5 +177,15 @@ public class Cluster {
         if (!this.invalidServers.contains(invalid)) {
             this.invalidServers.add(invalid);
         }
+    }
+
+    // TODO 自动检查无效的服务器，当服务器恢复上线时做好相应处理
+
+    @Override
+    public String toString() {
+        return "Cluster{" +
+                "id='" + id + '\'' +
+                ", weight=" + weight +
+                '}';
     }
 }

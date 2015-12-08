@@ -1,6 +1,7 @@
 package com.hyd.ssdb.conn;
 
 import com.hyd.ssdb.SsdbClientException;
+import com.hyd.ssdb.SsdbNoClusterAvailableException;
 import com.hyd.ssdb.SsdbNoServerAvailableException;
 import com.hyd.ssdb.SsdbSocketFailedException;
 import com.hyd.ssdb.conf.Cluster;
@@ -35,24 +36,11 @@ public class ConnectionPoolManager {
     }
 
     /**
-     * 根据 key 和操作类型获得一个服务器的连接池。
-     *
-     * @param key
-     * @param write
-     *
-     * @return
-     */
-    public ConnectionPool getConnectionPool(String key, boolean write) {
-        Cluster cluster = sharding.getClusterByKey(key);
-        return pickServer(cluster, write);
-    }
-
-    /**
      * 根据 key 和操作类型获取一个连接。如果 Cluster 的某个服务器无法创建连接，则自动切换
      * 到其他可用的服务器；如果所有的服务器都不可用，则抛出 SsdbNoServerAvailableException
      *
-     * @param key key
-     * @param write 是否是写入操作
+     * @param key          key
+     * @param write        是否是写入操作
      *
      * @return 连接和连接池
      */
@@ -60,9 +48,10 @@ public class ConnectionPoolManager {
             throws SsdbNoServerAvailableException {
         boolean retry = false;
         do {
-            Cluster cluster = sharding.getClusterByKey(key);
+            Cluster cluster = null;
             ConnectionPool connectionPool = null;
             try {
+                cluster = sharding.getClusterByKey(key);
                 connectionPool = pickServer(cluster, write);
                 Connection connection = connectionPool.borrowObject();
                 return new PoolAndConnection(connectionPool, connection);
@@ -74,6 +63,13 @@ public class ConnectionPoolManager {
                     reportInvalidConnection(server.getHost(), server.getPort());
                     retry = true;
                 }
+            } catch (SsdbNoServerAvailableException e) {  // 遇到单点故障，尝试切换 Cluster
+                sharding.reportInvalidCluster(cluster);
+                retry = true;
+
+            } catch (SsdbNoClusterAvailableException e) {  // 无法再继续尝试切换 Cluster
+                throw e;
+
             } catch (Exception e) {
                 throw new SsdbClientException(e);
             }
@@ -100,6 +96,7 @@ public class ConnectionPoolManager {
         return getConnectionPool(server);
     }
 
+    @SuppressWarnings("SynchronizationOnLocalVariableOrMethodParameter")
     private ConnectionPool getConnectionPool(final Server server) {
         synchronized (server) {
             if (connectionPoolMap.containsKey(server)) {
@@ -116,6 +113,9 @@ public class ConnectionPoolManager {
         return new ConnectionPool(server);
     }
 
+    /**
+     * 关闭所有连接池
+     */
     public void close() {
         for (ConnectionPool pool : connectionPoolMap.values()) {
             try {

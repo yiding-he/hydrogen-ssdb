@@ -25,6 +25,8 @@ public abstract class AbstractClient {
 
     private ConnectionPoolManager connectionPoolManager;
 
+    //////////////////////////////////////////////////////////////
+
     public AbstractClient(Sharding sharding) {
         this.connectionPoolManager = new ConnectionPoolManager(sharding);
     }

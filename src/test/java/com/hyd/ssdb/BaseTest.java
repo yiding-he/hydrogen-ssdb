@@ -16,7 +16,7 @@ public class BaseTest {
     @Before
     public void init() {
         // this.ssdbClient = new SsdbClient("192.168.1.180", 8888);
-        this.ssdbClient = new SsdbClient("heyiding.com", 27364);
+        this.ssdbClient = new SsdbClient("heyiding.com", 27364, null, 10000, 3);
     }
 
     @After
