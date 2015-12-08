@@ -2,6 +2,7 @@ package com.hyd.ssdb;
 
 import com.hyd.ssdb.protocol.Request;
 import com.hyd.ssdb.protocol.Response;
+import com.hyd.ssdb.util.IdScore;
 import com.hyd.ssdb.util.KeyValue;
 import org.junit.Test;
 
@@ -284,10 +285,10 @@ public class SsdbClientTest extends BaseTest {
         ssdbClient.zset("zkey", "user2", 456);
         ssdbClient.zset("zkey", "user3", 789);
 
-        List<KeyValue> keyValues = ssdbClient.zrange("zkey", 0, 2);
+        List<IdScore> keyValues = ssdbClient.zrange("zkey", 0, 2);
         assertEquals(2, keyValues.size());
-        assertEquals("user1", keyValues.get(0).getKey());
-        assertEquals("456", keyValues.get(1).getValue());
+        assertEquals("user1", keyValues.get(0).getId());
+        assertEquals(456, keyValues.get(1).getScore());
     }
 
     @Test

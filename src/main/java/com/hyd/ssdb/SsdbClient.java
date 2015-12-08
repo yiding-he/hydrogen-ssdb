@@ -1,5 +1,6 @@
 package com.hyd.ssdb;
 
+import com.hyd.ssdb.conf.Cluster;
 import com.hyd.ssdb.conf.Server;
 import com.hyd.ssdb.conf.Sharding;
 import com.hyd.ssdb.protocol.Response;
@@ -24,7 +25,6 @@ public class SsdbClient extends AbstractClient {
      *
      * @param host 服务器地址
      * @param port 服务器端口
-     *
      * @throws SsdbException 如果连接服务器失败
      */
     public SsdbClient(String host, int port) throws SsdbException {
@@ -34,6 +34,8 @@ public class SsdbClient extends AbstractClient {
     public SsdbClient(String host, int port, String pass) throws SsdbException {
         super(Sharding.fromSingleServer(host, port, pass));
     }
+
+    //////////////////////////////////////////////////////////////
 
     public SsdbClient(String host, int port, String pass, int soTimeout, int poolMaxTotal) throws SsdbException {
         super(Sharding.fromSingleServer(host, port, pass, soTimeout, poolMaxTotal));
@@ -45,6 +47,18 @@ public class SsdbClient extends AbstractClient {
 
     public SsdbClient(List<Server> servers) {
         super(Sharding.fromServerList(servers));
+    }
+
+    public SsdbClient(Server server) {
+        super(Sharding.fromSingleServer(server));
+    }
+
+    public static SsdbClient fromSingleCluster(List<Server> servers) {
+        return new SsdbClient(Sharding.fromServerList(servers));
+    }
+
+    public static SsdbClient fromClusters(List<Cluster> clusters) {
+        return new SsdbClient(new Sharding(clusters));
     }
 
     public long dbsize() {
@@ -355,7 +369,6 @@ public class SsdbClient extends AbstractClient {
      *
      * @param key id 所处的 zset 的 key
      * @param id  id
-     *
      * @return 排名，如果 id 不在 key 当中则返回 -1
      */
     public int zrank(String key, String id) {
@@ -381,7 +394,6 @@ public class SsdbClient extends AbstractClient {
      * @param key             zset 的 key
      * @param minScoreInclude score 最小值（含），Integer.MIN_VALUE 表示无最小值
      * @param maxScoreInclude score 最大值（含），Integer.MAX_VALUE 表示无最大值
-     *
      * @return score 在 minScoreInclude 与 maxScoreInclude 之间的 id 数量
      */
     public int zcount(String key, int minScoreInclude, int maxScoreInclude) {
@@ -408,7 +420,6 @@ public class SsdbClient extends AbstractClient {
      * @param key            zset 的 key
      * @param minRankInclude 最小排名（含），最小值为 0
      * @param maxRankInclude 最大排名（含），最大值为 zset 的大小
-     *
      * @return 被删除的 id 的数量
      */
     public int zremrangebyrank(String key, int minRankInclude, int maxRankInclude) {

@@ -73,3 +73,66 @@ Sharding sharding = new Sharding(Arrays.asList(
 SsdbClient ssdbClient = new SsdbClient(sharding);
 
 ```
+
+#### Spring XML 配置
+
+```XML
+<!-- 单个 SSDB 服务器的配置，其他几个类似的构造方法在此略去 -->
+<bean id="singleServerSsdbClient" class="com.hyd.ssdb.SsdbClient" destroy-method="close">
+    <constructor-arg name="host" value="192.168.1.180"/>
+    <constructor-arg name="port" value="8888"/>
+</bean>
+
+<!-- 多台 SSDB 主从服务器的配置 -->
+<bean id="ssdbServer1" class="com.hyd.ssdb.conf.Server">
+    <property name="host" value="192.168.1.180"/>
+    <property name="port" value="8888"/>
+    <property name="master" value="true"/>
+</bean>
+<bean id="ssdbServer2" class="com.hyd.ssdb.conf.Server">
+    <property name="host" value="192.168.1.180"/>
+    <property name="port" value="8889"/>
+    <property name="master" value="false"/>
+</bean>
+<bean id="singleClusterSsdbClient" class="com.hyd.ssdb.SsdbClient"
+      factory-method="fromSingleCluster" destroy-method="close">
+    <constructor-arg name="servers">
+        <list value-type="com.hyd.ssdb.conf.Server">
+            <ref bean="ssdbServer1"/>
+            <ref bean="ssdbServer2"/>
+        </list>
+    </constructor-arg>
+</bean>
+
+<!-- 多台 SSDB 负载均衡的配置（每个 Cluster 一台服务器） -->
+<bean id="ssdbCluster1" class="com.hyd.ssdb.conf.Cluster" factory-method="fromSingleServer">
+    <constructor-arg name="server" ref="ssdbServer1"/>
+</bean>
+<bean id="ssdbCluster2" class="com.hyd.ssdb.conf.Cluster" factory-method="fromSingleServer">
+    <constructor-arg name="server" ref="ssdbServer2"/>
+</bean>
+<bean id="shardingSsdbClient" class="com.hyd.ssdb.SsdbClient"
+      factory-method="fromClusters" destroy-method="close">
+    <constructor-arg name="clusters">
+        <list value-type="com.hyd.ssdb.conf.Cluster">
+            <ref bean="ssdbCluster1"/>
+            <ref bean="ssdbCluster2"/>
+        </list>
+    </constructor-arg>
+</bean>
+```
+
+### 使用注意
+
+#### 线程安全
+
+ `SsdbClient` 对象包含了对整个负载均衡的拓扑结构的处理，所以对于每一个由多个 SSDB 服务器组成的负载均衡架构，只需创建一个 `SsdbClient` 对象即可。另外 `SsdbClient` 是线程安全的，所以可以让任意多个线程访问。
+
+#### 内存溢出
+
+因为一个 `SsdbClient` 对象可能包含一个或多个连接池（每个连接池对应一个 SSDB 服务器），因此请不要创建大量的 `SsdbClient` 对象，这样完全没有必要，也会使得内存很容易被用光。
+
+
+
+
+

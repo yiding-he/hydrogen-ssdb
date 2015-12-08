@@ -268,7 +268,4 @@ public abstract class AbstractClient {
             return s;
         }
     }
-
-    ////////////////////////////////////////////////////////////////
-
 }

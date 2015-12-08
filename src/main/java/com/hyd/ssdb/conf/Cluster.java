@@ -25,21 +25,14 @@ public class Cluster {
     static final Logger LOG = LoggerFactory.getLogger(Cluster.class);
 
     private static final SecureRandom RANDOM = new SecureRandom();
-
-    ////////////////////////////////////////////////////////////////
-
     private String id = String.valueOf(hashCode());
-
     private List<Server> servers;
 
+    ////////////////////////////////////////////////////////////////
     private List<Server> masters = new ArrayList<Server>();
-
     private List<Server> invalidServers = new ArrayList<Server>();
-
     private int weight = DEFAULT_WEIGHT;
-
     private int minHash = Integer.MIN_VALUE;
-
     private int maxHash = Integer.MAX_VALUE;
 
     public Cluster(List<Server> servers, int weight) {
@@ -66,6 +59,14 @@ public class Cluster {
 
     public Cluster(Server server) {
         this(server, DEFAULT_WEIGHT);
+    }
+
+    public static Cluster fromSingleServer(Server server) {
+        return new Cluster(server);
+    }
+
+    public static Cluster fromServers(List<Server> servers) {
+        return new Cluster(servers);
     }
 
     // 将主服务器加入到 masters 列表
