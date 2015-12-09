@@ -33,6 +33,8 @@ public class ConnectionPoolManager {
 
     public ConnectionPoolManager(Sharding sharding) {
         this.sharding = sharding;
+
+        this.sharding.initClusters();
     }
 
     /**

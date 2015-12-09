@@ -14,7 +14,10 @@ import java.util.List;
  */
 public abstract class Sharding {
 
-    protected List<Cluster> clusters;
+    protected List<Cluster> clusters = new ArrayList<Cluster>();
+
+    public Sharding() {
+    }
 
     /**
      * 构造方法
@@ -38,7 +41,6 @@ public abstract class Sharding {
         }
 
         this.clusters = new ArrayList<Cluster>(clusters);
-        initClusters();
     }
 
     //////////////////////////////////////////////////////////////
