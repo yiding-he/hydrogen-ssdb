@@ -65,7 +65,7 @@ System.out.println(client.get("name")); // 读取请求会随机发送给任意�
 #### 配置负载均衡
 
 ```java
-Sharding sharding = new Sharding(Arrays.asList(
+Sharding sharding = new ConsistentHashSharding(Arrays.asList(
         new Cluster(new Server("192.168.1.180", 8888), 100),  // 100 和 200 这两个参数指的是权重，
         new Cluster(new Server("192.168.1.180", 8889), 200)   // 权重越大的 Cluster 所保存的 key 越多。
 ));
@@ -81,6 +81,13 @@ SsdbClient ssdbClient = new SsdbClient(sharding);
 <bean id="singleServerSsdbClient" class="com.hyd.ssdb.SsdbClient" destroy-method="close">
     <constructor-arg name="host" value="192.168.1.180"/>
     <constructor-arg name="port" value="8888"/>
+</bean>
+
+<!-- 自定义 Sharding -->
+<bean id="custShardingClient" class="com.hyd.ssdb.SsdbClient" destroy-method="close">
+    <constructor-arg name="sharding">
+        <bean class="com.hyd.ssdb.AjiaSharding"/>
+    </constructor-arg>
 </bean>
 
 <!-- 多台 SSDB 主从服务器的配置 -->

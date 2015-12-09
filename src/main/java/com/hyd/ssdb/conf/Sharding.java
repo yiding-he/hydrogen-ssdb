@@ -46,7 +46,7 @@ public abstract class Sharding {
     //////////////////////////////////////////////////////////////
 
     /**
-     * 初始化
+     * 对 {@link #clusters} 进行初始化配置，或执行其他初始化工作
      */
     public abstract void initClusters();
 
@@ -60,7 +60,7 @@ public abstract class Sharding {
     public abstract Cluster getClusterByKey(String key);
 
     /**
-     * 当整个 Cluster 下线时的处理
+     * 当某个 Cluster 下线（即 Cluster 中的所有的服务器都不可用）时的处理
      *
      * @param invalidCluster 下线的 Cluster
      */

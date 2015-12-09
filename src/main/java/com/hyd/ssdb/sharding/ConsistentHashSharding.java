@@ -98,6 +98,11 @@ public class ConsistentHashSharding extends Sharding {
         // 否则就保留 key 空间，直到 Cluster 恢复上线
     }
 
+    /**
+     * 自动扩展 key 空间，将 invalidCluster 的 key 空间交给其他 Cluster
+     *
+     * @param invalidCluster 已下线的 Cluster
+     */
     private void autoExpand(Cluster invalidCluster) {
         if (!rangeMap.containsKey(invalidCluster)) {
             return;
