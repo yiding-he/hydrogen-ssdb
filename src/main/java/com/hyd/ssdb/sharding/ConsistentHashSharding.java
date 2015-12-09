@@ -5,10 +5,12 @@ import com.hyd.ssdb.SsdbException;
 import com.hyd.ssdb.SsdbNoClusterAvailableException;
 import com.hyd.ssdb.conf.Cluster;
 import com.hyd.ssdb.conf.SPOFStrategy;
+import com.hyd.ssdb.conf.Sharding;
 import com.hyd.ssdb.util.MD5;
 import com.hyd.ssdb.util.Range;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -17,13 +19,21 @@ import java.util.Map;
  *
  * @author Yiding
  */
-public class ConsistentHashingShardingStrategy extends ShardingStrategy {
+public class ConsistentHashSharding extends Sharding {
 
     private Map<Cluster, Range<Integer>> rangeMap = new HashMap<Cluster, Range<Integer>>();
 
+    private SPOFStrategy spofStrategy = SPOFStrategy.PreserveKeySpaceStrategy;
+
+    public ConsistentHashSharding(Cluster cluster) {
+        super(cluster);
+    }
+
     //////////////////////////////////////////////////////////////
 
-    private SPOFStrategy spofStrategy = SPOFStrategy.PreserveKeySpaceStrategy;
+    public ConsistentHashSharding(List<Cluster> clusters) {
+        super(clusters);
+    }
 
     public SPOFStrategy getSpofStrategy() {
         return spofStrategy;
@@ -119,6 +129,9 @@ public class ConsistentHashingShardingStrategy extends ShardingStrategy {
 
     @Override
     public Cluster getClusterByKey(String key) {
+        if (clusters.isEmpty()) {
+            throw new SsdbNoClusterAvailableException("ALL CLUSTERS DOWN");
+        }
 
         if (clusters.size() == 1) {
             return clusters.get(0);

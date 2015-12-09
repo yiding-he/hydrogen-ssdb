@@ -64,6 +64,14 @@ public class Cluster {
         return new Cluster(server);
     }
 
+    public static Cluster fromSingleServer(String host, int port) {
+        return fromSingleServer(new Server(host, port));
+    }
+
+    public static Cluster fromSingleServer(String host, int port, String pass) {
+        return fromSingleServer(new Server(host, port, pass));
+    }
+
     public static Cluster fromServers(List<Server> servers) {
         return new Cluster(servers);
     }

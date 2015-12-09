@@ -1,7 +1,6 @@
 package com.hyd.ssdb;
 
 import com.hyd.ssdb.conf.Server;
-import com.hyd.ssdb.conf.Sharding;
 
 import java.util.Arrays;
 import java.util.List;
@@ -21,7 +20,7 @@ public class MasterSlaveTest {
                 new Server("192.168.1.180", 8889, null, false)  // 从服务器
         );
 
-        SsdbClient client = new SsdbClient(Sharding.fromServerList(servers));
+        SsdbClient client = new SsdbClient(servers);
         client.set("name", "hydrogen-ssdb");
         System.out.println(client.get("name"));
     }

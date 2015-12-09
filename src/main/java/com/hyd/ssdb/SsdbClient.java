@@ -4,6 +4,7 @@ import com.hyd.ssdb.conf.Cluster;
 import com.hyd.ssdb.conf.Server;
 import com.hyd.ssdb.conf.Sharding;
 import com.hyd.ssdb.protocol.Response;
+import com.hyd.ssdb.sharding.ConsistentHashSharding;
 import com.hyd.ssdb.util.IdScore;
 import com.hyd.ssdb.util.KeyValue;
 
@@ -29,17 +30,17 @@ public class SsdbClient extends AbstractClient {
      * @throws SsdbException 如果连接服务器失败
      */
     public SsdbClient(String host, int port) throws SsdbException {
-        super(Sharding.fromSingleServer(host, port));
+        super(new ConsistentHashSharding(Cluster.fromSingleServer(host, port)));
     }
 
     public SsdbClient(String host, int port, String pass) throws SsdbException {
-        super(Sharding.fromSingleServer(host, port, pass));
+        super(new ConsistentHashSharding(Cluster.fromSingleServer(host, port, pass)));
     }
 
     //////////////////////////////////////////////////////////////
 
     public SsdbClient(String host, int port, String pass, int soTimeout, int poolMaxTotal) throws SsdbException {
-        super(Sharding.fromSingleServer(host, port, pass, soTimeout, poolMaxTotal));
+        super(new ConsistentHashSharding(new Cluster(new Server(host, port, pass, true, soTimeout, poolMaxTotal))));
     }
 
     public SsdbClient(Sharding sharding) {
@@ -47,19 +48,19 @@ public class SsdbClient extends AbstractClient {
     }
 
     public SsdbClient(List<Server> servers) {
-        super(Sharding.fromServerList(servers));
+        super(new ConsistentHashSharding(new Cluster(servers)));
     }
 
     public SsdbClient(Server server) {
-        super(Sharding.fromSingleServer(server));
+        super(new ConsistentHashSharding(Cluster.fromSingleServer(server)));
     }
 
     public static SsdbClient fromSingleCluster(List<Server> servers) {
-        return new SsdbClient(Sharding.fromServerList(servers));
+        return new SsdbClient(servers);
     }
 
     public static SsdbClient fromClusters(List<Cluster> clusters) {
-        return new SsdbClient(new Sharding(clusters));
+        return new SsdbClient(new ConsistentHashSharding(clusters));
     }
 
     //////////////////////////////////////////////////////////////

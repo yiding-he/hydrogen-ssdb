@@ -3,6 +3,7 @@ package com.hyd.ssdb;
 import com.hyd.ssdb.conf.Cluster;
 import com.hyd.ssdb.conf.Server;
 import com.hyd.ssdb.conf.Sharding;
+import com.hyd.ssdb.sharding.ConsistentHashSharding;
 
 import java.util.Arrays;
 
@@ -15,7 +16,7 @@ import java.util.Arrays;
 public class MultiClustersTest {
 
     public static void main(String[] args) {
-        Sharding sharding = new Sharding(Arrays.asList(
+        Sharding sharding = new ConsistentHashSharding(Arrays.asList(
                 new Cluster(new Server("192.168.1.180", 8888), 100),
                 new Cluster(new Server("192.168.1.180", 8889), 100)
         ));
