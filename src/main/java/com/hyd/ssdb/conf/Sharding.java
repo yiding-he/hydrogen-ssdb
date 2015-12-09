@@ -98,6 +98,7 @@ public class Sharding {
 
     public void setShardingStrategy(ShardingStrategy shardingStrategy) {
         this.shardingStrategy = shardingStrategy;
+        this.shardingStrategy.initClusters();
     }
 
     public Cluster getClusterById(String id) {

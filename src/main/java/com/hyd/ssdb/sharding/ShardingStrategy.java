@@ -22,7 +22,7 @@ public abstract class ShardingStrategy {
     /**
      * 初始化
      */
-    protected abstract void initClusters();
+    public abstract void initClusters();
 
     /**
      * 根据 key 获取所对应的 Cluster

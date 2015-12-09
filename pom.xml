@@ -47,4 +47,17 @@
             <version>4.1.6.RELEASE</version>
         </dependency>
     </dependencies>
+
+    <distributionManagement>
+        <repository>
+            <id>mynexus</id>
+            <name>public</name>
+            <url>http://112.124.111.13:8081/nexus/content/repositories/releases/</url>
+        </repository>
+        <snapshotRepository>
+            <id>mynexus</id>
+            <name>Snapshots</name>
+            <url>http://112.124.111.13:8081/nexus/content/repositories/snapshots/</url>
+        </snapshotRepository>
+    </distributionManagement>
 </project>

@@ -34,7 +34,7 @@ public class ConsistentHashingShardingStrategy extends ShardingStrategy {
     }
 
     @Override
-    protected void initClusters() {
+    public void initClusters() {
 
         if (clusters.size() == 1) {
             setClusterRange(clusters.get(0), Integer.MIN_VALUE, Integer.MAX_VALUE);
