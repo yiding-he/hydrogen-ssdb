@@ -7,6 +7,7 @@ import com.hyd.ssdb.util.KeyValue;
 import org.junit.Test;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static org.junit.Assert.*;
@@ -301,5 +302,24 @@ public class SsdbClientTest extends BaseTest {
         assertEquals(1, ssdbClient.zcount("zkey", 100, 200));
         assertEquals(2, ssdbClient.zcount("zkey", 100, 500));
         assertEquals(3, ssdbClient.zcount("zkey", Integer.MIN_VALUE, Integer.MAX_VALUE));
+    }
+
+    @Test
+    public void testList() throws Exception {
+        ssdbClient.qclear("list");
+        ssdbClient.qpushFront("list", "one", "two", "three");
+        assertEquals(3, ssdbClient.qsize("list"));
+        assertEquals("one", ssdbClient.qback("list"));
+        assertEquals("three", ssdbClient.qfront("list"));
+
+        ssdbClient.qpushFront("list", "four");
+        assertEquals("four", ssdbClient.qfront("list"));
+
+        ssdbClient.qpushBack("list", "zero");
+        assertEquals("zero", ssdbClient.qback("list"));
+
+        List<String> rangedList = ssdbClient.qrange("list", 0, 2);
+        assertEquals(Arrays.asList("four", "three"), rangedList);
+        assertEquals(Collections.singletonList("zero"), ssdbClient.qpopBack("list", 1));
     }
 }

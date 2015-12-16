@@ -458,4 +458,79 @@ public class SsdbClient extends AbstractClient {
     public void multiZdel(String key, List<String> ids) {
         sendWriteRequest(prependCommand("multi_zdel", key, ids));
     }
+
+    //////////////////////////////////////////////////////////////
+
+    public int qpushFront(String key, String... values) {
+        return sendWriteRequest(prependCommand("qpush_front", key, values)).getIntResult();
+    }
+
+    public int qpushBack(String key, String... values) {
+        return sendWriteRequest(prependCommand("qpush_back", key, values)).getIntResult();
+    }
+
+    public List<String> qpopFront(String key, int size) {
+        return sendWriteRequest("qpop_front", key, size).getBlocks();
+    }
+
+    public List<String> qpopBack(String key, int size) {
+        return sendWriteRequest("qpop_back", key, size).getBlocks();
+    }
+
+    public String qfront(String key) {
+        return sendRequest("qfront", key).firstBlock();
+    }
+
+    public String qback(String key) {
+        return sendRequest("qback", key).firstBlock();
+    }
+
+    public int qsize(String key) {
+        return sendRequest("qsize", key).getIntResult();
+    }
+
+    public void qclear(String key) {
+        sendWriteRequest("qclear", key);
+    }
+
+    public String qget(String key, int index) {
+        return sendRequest("qget", key, index).firstBlock();
+    }
+
+    public void qset(String key, int index, String value) {
+        sendWriteRequest("qset", key, index, value);
+    }
+
+    public List<String> qrange(String key, int offset, int limit) {
+        return sendRequest("qrange", key, offset, limit).getBlocks();
+    }
+
+    public List<String> qslice(String key, int startInclude, int endInclude) {
+        return sendRequest("qslice", key, startInclude, endInclude).getBlocks();
+    }
+
+    public int qtrimFront(String key, int size) {
+        return sendWriteRequest("qtrim_front", key, size).getIntResult();
+    }
+
+    public int qtrimBack(String key, int size) {
+        return sendWriteRequest("qtrim_back", key, size).getIntResult();
+    }
+
+    /**
+     * 列出指定区间的 queue/list 的 key 列表
+     *
+     * @param startKeyExclude 起始名字（不含，可选）
+     * @param endKeyInclude   结束名字（含，可选）
+     * @param limit           最多返回记录数
+     *
+     * @return 指定区间的 queue/list 的 key 列表
+     */
+    public List<String> qlist(String startKeyExclude, String endKeyInclude, int limit) {
+        return sendRequest("qlist", startKeyExclude, endKeyInclude, limit).getBlocks();
+    }
+
+    public List<String> qrlist(String startKeyExclude, String endKeyInclude, int limit) {
+        return sendRequest("qrlist", startKeyExclude, endKeyInclude, limit).getBlocks();
+    }
 }
