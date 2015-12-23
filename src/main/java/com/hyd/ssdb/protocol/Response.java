@@ -7,7 +7,7 @@ import java.io.ByteArrayInputStream;
 import java.util.*;
 
 /**
- * (description)
+ * 服务器回应
  * created at 15-11-30
  *
  * @author Yiding
