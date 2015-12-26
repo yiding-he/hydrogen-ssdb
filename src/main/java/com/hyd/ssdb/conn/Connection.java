@@ -37,8 +37,8 @@ public class Connection {
             this.socket = new Socket(host, port);
             this.socket.setSoTimeout(soTimeout);
             this.available = true;
-            this.setProperty("host", host);
-            this.setProperty("port", port);
+            this.properties.put("host", host);
+            this.properties.put("port", port);
         } catch (IOException e) {
             throw new SsdbSocketFailedException(e);
         }

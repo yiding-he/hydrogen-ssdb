@@ -16,7 +16,7 @@ public class Request {
 
     private Block header;
 
-    private List<Block> blocks = new ArrayList<Block>();
+    private final List<Block> blocks = new ArrayList<Block>();
 
     public Request(String command) {
         String[] tokens = command.split("\\s+");
