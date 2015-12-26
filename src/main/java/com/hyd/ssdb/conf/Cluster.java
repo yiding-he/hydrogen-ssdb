@@ -26,12 +26,16 @@ public class Cluster {
     static final Logger LOG = LoggerFactory.getLogger(Cluster.class);
 
     private static final SecureRandom RANDOM = new SecureRandom();
+
     private String id = String.valueOf(hashCode());
+
     private List<Server> servers;
 
     ////////////////////////////////////////////////////////////////
     private List<Server> masters = new ArrayList<Server>();
+
     private List<Server> invalidServers = new ArrayList<Server>();
+
     private int weight = DEFAULT_WEIGHT;
 
     public Cluster(List<Server> servers, int weight) {
@@ -60,6 +64,17 @@ public class Cluster {
         this(server, DEFAULT_WEIGHT);
     }
 
+    //////////////////////////////////////////////////////////////
+
+    // 将一个 Server 列表转换为一个 Cluster 列表，其中每个 Cluster 包含一个 Server
+    public static List<Cluster> toClusters(List<Server> servers) {
+        ArrayList<Cluster> clusters = new ArrayList<Cluster>();
+        for (Server server : servers) {
+            clusters.add(new Cluster(server));
+        }
+        return clusters;
+    }
+
     public static Cluster fromSingleServer(Server server) {
         return new Cluster(server);
     }
@@ -75,6 +90,8 @@ public class Cluster {
     public static Cluster fromServers(List<Server> servers) {
         return new Cluster(servers);
     }
+
+    //////////////////////////////////////////////////////////////
 
     // 将主服务器加入到 masters 列表
     private void fillMasters() {

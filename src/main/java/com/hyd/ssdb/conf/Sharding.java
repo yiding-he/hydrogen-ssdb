@@ -7,7 +7,8 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * 多台服务器的拓扑结构配置
+ * 根据服务器的拓扑结构，决定一个请求应该被发送到哪台服务器
+ *
  * created at 15-12-3
  *
  * @author Yiding
@@ -31,11 +32,14 @@ public abstract class Sharding {
     /**
      * 构造方法
      *
-     * @param clusters 集群配置
+     * @param clusters 集群配置。注意本方法将会使用 clusters 的拷贝，因此调用本方法之后再操作
+     *                 clusters（清空或增减元素），不会对 Sharding 有任何影响。
      */
     public Sharding(List<Cluster> clusters) {
 
+        // 清掉可能的 null 元素
         clusters.removeAll(Collections.singleton((Cluster) null));
+
         if (clusters.isEmpty()) {
             throw new SsdbClientException("clusters is empty");
         }
@@ -60,11 +64,11 @@ public abstract class Sharding {
     public abstract Cluster getClusterByKey(String key);
 
     /**
-     * 当某个 Cluster 下线（即 Cluster 中的所有的服务器都不可用）时的处理
+     * 当某个 Cluster 下线（即 Cluster 中的所有的服务器都不可用）时的处理（交给子类实现）
      *
      * @param invalidCluster 下线的 Cluster
      */
-    public abstract void clusterFailed(Cluster invalidCluster);
+    protected abstract void clusterFailed(Cluster invalidCluster);
 
     //////////////////////////////////////////////////////////////
 

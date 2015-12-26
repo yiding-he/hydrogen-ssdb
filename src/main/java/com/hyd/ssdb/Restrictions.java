@@ -1,7 +1,7 @@
 package com.hyd.ssdb;
 
 /**
- * (description)
+ * 一些受到 SSDB 限制的常量
  * created at 15-12-3
  *
  * @author Yiding

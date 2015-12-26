@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 
 /**
- * 首先 SsdbClient 的一些底层方法
+ * 实现 SsdbClient 的一些底层方法
  *
  * @author Yiding
  */
@@ -23,12 +23,24 @@ public abstract class AbstractClient {
 
     static final org.slf4j.Logger LOG = LoggerFactory.getLogger(AbstractClient.class);
 
+    /**
+     * 管理所有的 SSDB 连接
+     */
     private ConnectionPoolManager connectionPoolManager;
 
     //////////////////////////////////////////////////////////////
 
     public AbstractClient(Sharding sharding) {
         this.connectionPoolManager = new ConnectionPoolManager(sharding);
+    }
+
+    /**
+     * 获取负载均衡策略（可用于在运行时变更配置）
+     *
+     * @return 负载均衡策略对象
+     */
+    public Sharding getSharding() {
+        return this.connectionPoolManager.getSharding();
     }
 
     /**

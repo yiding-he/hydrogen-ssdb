@@ -14,7 +14,10 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 基于一致性哈希的分片策略
+ * 基于一致性哈希的分片策略。这是 hydrogen-ssdb 实现的缺省分片策略。
+ * <p/>
+ * ConsistentHashSharding 有一个属性叫做 {@link #spofStrategy}，用于决定当出现单点故障时如何处理。
+ * <p/>
  * created at 15-12-8
  *
  * @author Yiding
@@ -23,7 +26,10 @@ public class ConsistentHashSharding extends Sharding {
 
     private Map<Cluster, Range<Integer>> rangeMap = new HashMap<Cluster, Range<Integer>>();
 
-    private SPOFStrategy spofStrategy = SPOFStrategy.PreserveKeySpaceStrategy;
+    /**
+     * 单点故障处理策略，参考 {@link SPOFStrategy}
+     */
+    private SPOFStrategy spofStrategy = SPOFStrategy.AutoExpandStrategy;
 
     public ConsistentHashSharding(Cluster cluster) {
         super(cluster);
@@ -41,6 +47,35 @@ public class ConsistentHashSharding extends Sharding {
 
     public void setSpofStrategy(SPOFStrategy spofStrategy) {
         this.spofStrategy = spofStrategy;
+    }
+
+
+    public void removeCluster(String clusterId) {
+        clusterFailed(getClusterById(clusterId));
+    }
+
+    /**
+     * 添加一个 Cluster
+     *
+     * @param newCluster  要加入的 Cluster
+     * @param prevCluster 需要被分担负载的 Cluster
+     */
+    public synchronized void addCluster(Cluster newCluster, Cluster prevCluster) {
+        if (clusters.contains(newCluster)) {
+            return;
+        }
+
+        clusters.add(newCluster);
+        Range<Integer> prevClusterRange = rangeMap.get(prevCluster);
+        int prevMax = prevClusterRange.getMax();
+        int split = prevClusterRange.getMin() +
+                (prevClusterRange.getMax() - prevClusterRange.getMin()) * prevCluster.getWeight()
+                        / (prevCluster.getWeight() + newCluster.getWeight());
+
+        prevClusterRange.setMax(split);
+
+        Range<Integer> newClusterRange = new Range<Integer>(split + 1, prevMax);
+        rangeMap.put(newCluster, newClusterRange);
     }
 
     @Override
@@ -90,6 +125,10 @@ public class ConsistentHashSharding extends Sharding {
 
     @Override
     public void clusterFailed(Cluster invalidCluster) {
+        if (invalidCluster == null) {
+            return;
+        }
+
         if (this.spofStrategy == SPOFStrategy.AutoExpandStrategy) {
             autoExpand(invalidCluster);
             clusters.remove(invalidCluster);
@@ -103,7 +142,7 @@ public class ConsistentHashSharding extends Sharding {
      *
      * @param invalidCluster 已下线的 Cluster
      */
-    private void autoExpand(Cluster invalidCluster) {
+    private synchronized void autoExpand(Cluster invalidCluster) {
         if (!rangeMap.containsKey(invalidCluster)) {
             return;
         }

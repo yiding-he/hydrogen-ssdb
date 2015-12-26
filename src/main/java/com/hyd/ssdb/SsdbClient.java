@@ -33,26 +33,30 @@ public class SsdbClient extends AbstractClient {
         super(new ConsistentHashSharding(Cluster.fromSingleServer(host, port)));
     }
 
+    // 创建只连接到一台服务器的，带密码的 SsdbClient 对象
     public SsdbClient(String host, int port, String pass) throws SsdbException {
         super(new ConsistentHashSharding(Cluster.fromSingleServer(host, port, pass)));
+    }
+
+    // 基于一台服务器的配置创建 SsdbClient 对象
+    public SsdbClient(Server server) {
+        super(new ConsistentHashSharding(Cluster.fromSingleServer(server)));
+    }
+
+    // 创建连接到被 Sharding 托管的服务器集群的 SsdbClient 对象
+    public SsdbClient(Sharding sharding) {
+        super(sharding);
+    }
+
+    // 根据服务器列表，生成权重均等的基于一致性哈希环的分片集群，并创建连接到该集群的 SsdbClient 对象
+    public SsdbClient(List<Server> servers) {
+        super(new ConsistentHashSharding(Cluster.toClusters(servers)));
     }
 
     //////////////////////////////////////////////////////////////
 
     public SsdbClient(String host, int port, String pass, int soTimeout, int poolMaxTotal) throws SsdbException {
         super(new ConsistentHashSharding(new Cluster(new Server(host, port, pass, true, soTimeout, poolMaxTotal))));
-    }
-
-    public SsdbClient(Sharding sharding) {
-        super(sharding);
-    }
-
-    public SsdbClient(List<Server> servers) {
-        super(new ConsistentHashSharding(new Cluster(servers)));
-    }
-
-    public SsdbClient(Server server) {
-        super(new ConsistentHashSharding(Cluster.fromSingleServer(server)));
     }
 
     public static SsdbClient fromSingleCluster(List<Server> servers) {
