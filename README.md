@@ -24,7 +24,7 @@ hydrogen-ssdb 缺省实现了基于一致性哈希环的负载均衡方式。如
 ```java
 Cluster cluster = new Cluster(server);
 MySharding mySharding = new MySharding(cluster);  // 自定义 Sharding
-SsdbClient client = new SsdbClient(sharding);
+SsdbClient client = new SsdbClient(mySharding);
 ```
 
 下面介绍 hydrogen-ssdb 缺省实现的负载均衡的原理。
