@@ -15,6 +15,10 @@ public class Block {
 
     private byte[] data;
 
+    public Block(byte[] data) {
+        this.data = data;
+    }
+
     public Block(String data) throws SsdbException {
         if (data == null || data.length() == 0) {
             this.data = new byte[0];

@@ -184,7 +184,7 @@ public abstract class AbstractClient {
     // 检查服务器回应，如果是错误回应则抛出一个异常
     private void checkResponse(String requestHeader, Response response) {
         String header = response.getHeader();
-        LOG.debug("RESPONSE(" + requestHeader + "): [" + header + "] - " + response.getBlocks());
+        LOG.debug("RESPONSE(" + requestHeader + "): [" + header + "] - (" + response.getBlocks().size() + " blocks)");
 
         if (!(header.equals("ok") || header.equals("not_found"))) {
             SsdbException e = new SsdbException("Server return error: '" + header + "'");

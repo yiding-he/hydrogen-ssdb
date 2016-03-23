@@ -3,8 +3,12 @@ package com.hyd.ssdb.protocol;
 import com.hyd.ssdb.util.IdScore;
 import com.hyd.ssdb.util.KeyValue;
 
-import java.io.ByteArrayInputStream;
-import java.util.*;
+import java.io.ByteArrayOutputStream;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * 服务器回应
@@ -14,31 +18,51 @@ import java.util.*;
  */
 public class Response {
 
+    private byte[] content;
+
     private String header;
 
     private List<String> blocks = new ArrayList<String>();
 
     public Response(byte[] data) {
-        Scanner scanner = new Scanner(new ByteArrayInputStream(data));
-        boolean lengthFlag = true;  // 当前行是否是长度，如果是 false 则表示是内容
-        boolean headerExists = false;
+        int length = 0, pointer = 0; // 要读取的内容长度和当前读取位置
+        boolean lengthFlag = true;   // 当前行是否是长度，如果是 false 则表示是内容
 
-        while (scanner.hasNext()) {
-            String line = scanner.nextLine();
-            if (line.length() == 0) {
-                break;
-            }
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
 
-            if (!lengthFlag) {
-                if (!headerExists) {
-                    this.header = line;
-                    headerExists = true;
+        ByteBuffer byteBuffer = ByteBuffer.wrap(data);
+        while (byteBuffer.hasRemaining()) {
+            byte b = byteBuffer.get();
+
+            if (lengthFlag) {
+                if (b == '\n' && buffer.size() > 0) {
+                    length = Integer.parseInt(new String(buffer.toByteArray()));
+                    pointer = 0;
+                    buffer.reset();
+                    lengthFlag = false;
                 } else {
-                    this.blocks.add(line);
+                    buffer.write(b);
+                }
+            } else {
+
+                // 读取块的内容部分，根据 length 确定要读取多少内容
+                if (pointer < length) {
+                    buffer.write(b);
+                    pointer++;
+                } else {
+                    if (b == '\n') {
+                        this.content = buffer.toByteArray();  // content 只保存最后读取的块内容
+                        String s = new String(content);
+                        if (header == null) {
+                            header = s;
+                        } else {
+                            blocks.add(s);
+                        }
+                        buffer.reset();
+                        lengthFlag = true;
+                    }
                 }
             }
-
-            lengthFlag = !lengthFlag;
         }
     }
 
@@ -119,5 +143,9 @@ public class Response {
         }
 
         return map;
+    }
+
+    public byte[] getBytes() {
+        return content;
     }
 }

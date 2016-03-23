@@ -85,6 +85,10 @@ public class SsdbClient extends AbstractClient {
         return sendRequest("get", key).firstBlock();
     }
 
+    public byte[] getBytes(String key) {
+        return sendRequest("get", key).getBytes();
+    }
+
     public void set(String key, Object value) {
         if (value == null) {
             throw new SsdbException("Cannot save null to SSDB");

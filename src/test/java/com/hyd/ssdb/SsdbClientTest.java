@@ -2,6 +2,7 @@ package com.hyd.ssdb;
 
 import com.hyd.ssdb.protocol.Request;
 import com.hyd.ssdb.protocol.Response;
+import com.hyd.ssdb.util.Bytes;
 import com.hyd.ssdb.util.IdScore;
 import com.hyd.ssdb.util.KeyValue;
 import org.junit.Test;
@@ -37,6 +38,14 @@ public class SsdbClientTest extends BaseTest {
     @Test
     public void testInfo() throws Exception {
         System.out.println(ssdbClient.info());
+    }
+
+    @Test
+    public void testSetStringWithReturn() throws Exception {
+        String key = "str_with_return";
+        ssdbClient.set(key, "123\n\r\t456");
+        System.out.println(ssdbClient.get(key)
+                .replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t"));
     }
 
     @Test
@@ -85,6 +94,12 @@ public class SsdbClientTest extends BaseTest {
         ssdbClient.set("key", "old_value");
         assertEquals("old_value", ssdbClient.getset("key", "new_value"));
         assertEquals("new_value", ssdbClient.get("key"));
+    }
+
+    @Test
+    public void testSetGetBytes() throws Exception {
+        ssdbClient.set("bytes", new byte[]{50, 51, 52, 62});
+        System.out.println(Bytes.toString(ssdbClient.getBytes("bytes")));
     }
 
     @Test
@@ -193,6 +208,14 @@ public class SsdbClientTest extends BaseTest {
 
         List<KeyValue> keyValues = ssdbClient.scan("_key0", "_key9", 9);
         assertEquals(4, keyValues.size());
+        for (KeyValue keyValue : keyValues) {
+            System.out.println(keyValue);
+        }
+    }
+
+    @Test
+    public void testScanAllKeys() throws Exception {
+        List<KeyValue> keyValues = ssdbClient.scan("", "", 1000);
         for (KeyValue keyValue : keyValues) {
             System.out.println(keyValue);
         }
@@ -322,4 +345,5 @@ public class SsdbClientTest extends BaseTest {
         assertEquals(Arrays.asList("four", "three"), rangedList);
         assertEquals(Collections.singletonList("zero"), ssdbClient.qpopBack("list", 1));
     }
+
 }

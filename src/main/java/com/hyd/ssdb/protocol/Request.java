@@ -35,12 +35,20 @@ public class Request {
 
         // 一个命令至少有 command 和 key 两个部分，然后可能有后面其他参数
         if (tokens.length < 2) {
-            throw new SsdbException("Invalid command");
+            throw new SsdbException("Command '" + tokens[0] + "' not supported.");
         }
 
         this.header = new Block(tokens[0].toString());
+
         for (int i = 1; i < tokens.length; i++) {
-            this.blocks.add(new Block(tokens[i].toString()));
+            Object token = tokens[i];
+            Block block;
+            if (token instanceof byte[]) {
+                block = new Block((byte[]) token);
+            } else {
+                block = new Block(token.toString());
+            }
+            this.blocks.add(block);
         }
     }
 
