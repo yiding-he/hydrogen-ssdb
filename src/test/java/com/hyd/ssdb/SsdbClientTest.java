@@ -364,4 +364,37 @@ public class SsdbClientTest extends BaseTest {
         assertEquals(Collections.singletonList("zero"), ssdbClient.qpopBack("list", 1));
     }
 
+    @Test
+    public void testPopAllFront() throws Exception {
+        ssdbClient.qpushFront("q1", "1");
+        ssdbClient.qpushFront("q1", "2");
+        ssdbClient.qpushFront("q1", "3");
+        ssdbClient.qpushFront("q1", "4");
+        ssdbClient.qpushFront("q1", "5");
+        ssdbClient.qpushFront("q1", "6");
+
+        ssdbClient.qpopAllFront("q1", 5, new Processor<String>() {
+            @Override
+            public void process(String s) {
+                System.out.println(s);
+            }
+        });
+    }
+
+    @Test
+    public void testPopAllBack() throws Exception {
+        ssdbClient.qpushFront("q1", "1");
+        ssdbClient.qpushFront("q1", "2");
+        ssdbClient.qpushFront("q1", "3");
+        ssdbClient.qpushFront("q1", "4");
+        ssdbClient.qpushFront("q1", "5");
+        ssdbClient.qpushFront("q1", "6");
+
+        ssdbClient.qpopAllBack("q1", 5, new Processor<String>() {
+            @Override
+            public void process(String s) {
+                System.out.println(s);
+            }
+        });
+    }
 }

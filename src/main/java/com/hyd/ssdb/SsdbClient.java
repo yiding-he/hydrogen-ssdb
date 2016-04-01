@@ -501,6 +501,24 @@ public class SsdbClient extends AbstractClient {
         return sendWriteRequest("qpop_back", key, size).getBlocks();
     }
 
+    public void qpopAllFront(String key, int batchSize, Processor<String> valueProcessor) {
+        while (qsize(key) > 0) {
+            List<String> values = qpopFront(key, batchSize);
+            for (String value : values) {
+                valueProcessor.process(value);
+            }
+        }
+    }
+
+    public void qpopAllBack(String key, int batchSize, Processor<String> valueProcessor) {
+        while (qsize(key) > 0) {
+            List<String> values = qpopBack(key, batchSize);
+            for (String value : values) {
+                valueProcessor.process(value);
+            }
+        }
+    }
+
     public String qfront(String key) {
         return sendRequest("qfront", key).firstBlock();
     }
