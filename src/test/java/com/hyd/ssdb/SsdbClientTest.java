@@ -5,11 +5,13 @@ import com.hyd.ssdb.protocol.Response;
 import com.hyd.ssdb.util.Bytes;
 import com.hyd.ssdb.util.IdScore;
 import com.hyd.ssdb.util.KeyValue;
+import com.hyd.ssdb.util.Processor;
 import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.*;
 
@@ -219,6 +221,22 @@ public class SsdbClientTest extends BaseTest {
         for (KeyValue keyValue : keyValues) {
             System.out.println(keyValue);
         }
+    }
+
+    @Test
+    public void testScanWithProcessor() throws Exception {
+        String prefix = "ScoreValue:431200_BIG_UNION_2016:range:Examno:705130040:target:Quest";
+        final AtomicInteger counter = new AtomicInteger();
+
+        ssdbClient.scan(prefix, 100, new Processor<KeyValue>() {
+            @Override
+            public void process(KeyValue keyValue) {
+                if (counter.incrementAndGet() > 1000) {
+                    throw new RuntimeException("STOP");
+                }
+                System.out.println(keyValue);
+            }
+        });
     }
 
     @Test

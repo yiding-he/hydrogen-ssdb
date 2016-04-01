@@ -7,6 +7,7 @@ import com.hyd.ssdb.protocol.Response;
 import com.hyd.ssdb.sharding.ConsistentHashSharding;
 import com.hyd.ssdb.util.IdScore;
 import com.hyd.ssdb.util.KeyValue;
+import com.hyd.ssdb.util.Processor;
 
 import java.util.Arrays;
 import java.util.List;
@@ -14,7 +15,7 @@ import java.util.Map;
 
 /**
  * 包含连接池的客户端类，对于一个 SSDB 服务器只需要创建一个 SsdbClient 客户端。
- * <p/>
+ * <p>
  * 应用关闭时，需要调用 {@link #close()} 方法释放资源。
  *
  * @author Yiding
@@ -219,6 +220,21 @@ public class SsdbClient extends AbstractClient {
 
     public List<KeyValue> scan(String startExclude, String endInclude, int limit) {
         return sendRequest("scan", startExclude, endInclude, limit).getKeyValues();
+    }
+
+    public void scan(String prefix, int batchSize, Processor<KeyValue> keyConsumer) {
+        String start = prefix;
+        String end = prefix + (char) 255;
+
+        List<KeyValue> result = scan(start, end, batchSize);
+
+        while (!result.isEmpty() && start.startsWith(prefix)) {
+            for (KeyValue keyValue : result) {
+                keyConsumer.process(keyValue);
+            }
+            start = result.get(result.size() - 1).getKey();
+            result = scan(start, end, batchSize);
+        }
     }
 
     public List<KeyValue> rscan(String startExclude, String endInclude, int limit) {
