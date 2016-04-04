@@ -62,6 +62,7 @@ public class ConnectionPoolManager {
                 return new PoolAndConnection(connectionPool, connection);
 
             } catch (SsdbSocketFailedException e) { // 表示连接创建失败
+                LOG.error("Connection failed: ", e);
                 if (connectionPool != null) {
                     Server server = connectionPool.getConnectionFactory().getServer();
                     // 将服务器标记为不可用，这样下次 do-while 循环就会跳过该服务器
@@ -69,10 +70,12 @@ public class ConnectionPoolManager {
                     retry = true;
                 }
             } catch (SsdbNoServerAvailableException e) {  // 遇到单点故障，尝试切换 Cluster
+                LOG.error("Connection failed: ", e);
                 sharding.reportInvalidCluster(cluster);
                 retry = true;
 
             } catch (SsdbNoClusterAvailableException e) {  // 无法再继续尝试切换 Cluster
+                LOG.error("Connection failed: ", e);
                 throw e;
 
             } catch (Exception e) {

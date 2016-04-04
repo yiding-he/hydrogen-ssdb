@@ -34,6 +34,16 @@ public class SsdbClient extends AbstractClient {
         super(new ConsistentHashSharding(Cluster.fromSingleServer(host, port)));
     }
 
+    // 创建只连接到一台服务器的 SsdbClient 对象
+    public SsdbClient(String host, int port, int timeoutSeconds) throws SsdbException {
+        super(new ConsistentHashSharding(Cluster.fromSingleServer(host, port, timeoutSeconds)));
+    }
+
+    // 创建只连接到一台服务器的，带密码的 SsdbClient 对象
+    public SsdbClient(String host, int port, int timeoutSeconds, String pass) throws SsdbException {
+        super(new ConsistentHashSharding(Cluster.fromSingleServer(host, port, pass)));
+    }
+
     // 创建只连接到一台服务器的，带密码的 SsdbClient 对象
     public SsdbClient(String host, int port, String pass) throws SsdbException {
         super(new ConsistentHashSharding(Cluster.fromSingleServer(host, port, pass)));

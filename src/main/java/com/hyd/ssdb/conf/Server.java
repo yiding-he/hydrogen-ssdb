@@ -36,6 +36,12 @@ public class Server {
         this.pass = pass;
     }
 
+    public Server(String host, int port, int timeoutSeconds) {
+        this.host = host;
+        this.port = port;
+        this.socketConfig.setSoTimeout(timeoutSeconds * 1000);
+    }
+
     public Server(String host, int port, String pass, boolean master) {
         this.host = host;
         this.port = port;

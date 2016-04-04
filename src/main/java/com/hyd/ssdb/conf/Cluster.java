@@ -83,6 +83,10 @@ public class Cluster {
         return fromSingleServer(new Server(host, port));
     }
 
+    public static Cluster fromSingleServer(String host, int port, int timeoutSeconds) {
+        return fromSingleServer(new Server(host, port, timeoutSeconds));
+    }
+
     public static Cluster fromSingleServer(String host, int port, String pass) {
         return fromSingleServer(new Server(host, port, pass));
     }
@@ -194,7 +198,7 @@ public class Cluster {
      * @param invalid 需要被标记的服务器
      */
     public synchronized void markInvalid(Server invalid) {
-        LOG.debug("Removing invalid server " + invalid);
+        LOG.error("Removing invalid server " + invalid);
 
         this.servers.remove(invalid);
         this.masters.remove(invalid);

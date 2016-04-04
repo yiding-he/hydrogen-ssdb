@@ -108,6 +108,7 @@ public abstract class AbstractClient {
             } catch (SsdbNoServerAvailableException e) {
                 throw e;
             } catch (SsdbClientException e) {
+                LOG.error("Connection error", e);
 
                 // 标记不可用的服务器，这样下次调用 getConnectionPool() 就会切换到其他服务器了
                 connectionPoolManager.reportInvalidConnection(connection);
