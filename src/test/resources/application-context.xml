@@ -54,4 +54,10 @@
             </list>
         </constructor-arg>
     </bean>
+
+    <!-- 带命名的 cluster 节点 -->
+    <bean id="namedCluster" class="com.hyd.ssdb.conf.Cluster" factory-method="fromSingleServer">
+        <constructor-arg name="server" ref="ssdbServer1"/>
+        <property name="id" value="cluster1"/>
+    </bean>
 </beans>
