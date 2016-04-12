@@ -74,6 +74,12 @@ public class SsdbClientTest extends BaseTest {
     }
 
     @Test
+    public void testHexists() throws Exception {
+        ssdbClient.hset("hname", "prop", "value");
+        assertTrue(ssdbClient.hexists("hname", "prop"));
+    }
+
+    @Test
     public void testTtl() throws Exception {
         ssdbClient.set("name", "ssdb");
         System.out.println(ssdbClient.ttl("name"));

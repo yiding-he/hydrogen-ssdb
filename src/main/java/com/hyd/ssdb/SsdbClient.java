@@ -296,7 +296,7 @@ public class SsdbClient extends AbstractClient {
     }
 
     public boolean hexists(String key, String propName) {
-        return sendRequest("hexists", propName).getIntResult() > 0;
+        return sendRequest("hexists", key, propName).getIntResult() > 0;
     }
 
     public int hsize(String key) {
