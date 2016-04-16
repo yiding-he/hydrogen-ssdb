@@ -119,6 +119,13 @@ public class SsdbClientTest extends BaseTest {
     }
 
     @Test
+    public void testQpushFrontBytes() throws Exception {
+        ssdbClient.qclear("queue");
+        ssdbClient.qpushFront("queue", new byte[]{50, 51, 52, 62});
+        System.out.println(Arrays.toString(ssdbClient.qgetBytes("queue", 0)));
+    }
+
+    @Test
     public void testIncr() throws Exception {
         ssdbClient.set("counter", 123);
         assertEquals(223, ssdbClient.incr("counter", 100));

@@ -499,8 +499,16 @@ public class SsdbClient extends AbstractClient {
         return sendWriteRequest(prependCommand("qpush_front", key, values)).getIntResult();
     }
 
+    public int qpushFront(String key, byte[] bytes) {
+        return sendWriteRequest("qpush_front", key, bytes).getIntResult();
+    }
+
     public int qpushBack(String key, String... values) {
         return sendWriteRequest(prependCommand("qpush_back", key, values)).getIntResult();
+    }
+
+    public int qpushBack(String key, byte[] bytes) {
+        return sendWriteRequest("qpush_back", key, bytes).getIntResult();
     }
 
     public List<String> qpopFront(String key, int size) {
