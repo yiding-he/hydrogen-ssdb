@@ -549,6 +549,10 @@ public class SsdbClient extends AbstractClient {
         return sendRequest("qget", key, index).firstBlock();
     }
 
+    public byte[] qgetBytes(String key, int index) {
+        return sendRequest("qget", key, index).getBytes();
+    }
+
     public void qset(String key, int index, String value) {
         sendWriteRequest("qset", key, index, value);
     }

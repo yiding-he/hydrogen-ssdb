@@ -89,6 +89,14 @@ public class SsdbClientTest extends BaseTest {
     }
 
     @Test
+    public void testQbytes() throws Exception {
+        ssdbClient.qclear("queue");
+        ssdbClient.qpushFront("queue", "123");
+        System.out.println(ssdbClient.qget("queue", 0));
+        System.out.println(new String(ssdbClient.qgetBytes("queue", 0)));
+    }
+
+    @Test
     public void testSetx() throws Exception {
         ssdbClient.setx("key", "value", 3);
         assertEquals("value", ssdbClient.get("key"));
