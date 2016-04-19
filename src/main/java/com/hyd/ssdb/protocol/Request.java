@@ -35,7 +35,7 @@ public class Request {
 
         // 一个命令至少有 command 和 key 两个部分，然后可能有后面其他参数
         if (tokens.length < 2) {
-            throw new SsdbException("Command '" + tokens[0] + "' not supported.");
+            throw new SsdbException("Command '" + tokens[0] + "' has no parameters or not supported.");
         }
 
         this.header = new Block(tokens[0].toString());

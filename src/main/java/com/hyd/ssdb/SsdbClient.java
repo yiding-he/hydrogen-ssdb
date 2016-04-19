@@ -252,6 +252,11 @@ public class SsdbClient extends AbstractClient {
     }
 
     public void multiSet(String... keyValues) {
+
+        if (keyValues == null || keyValues.length == 0) {
+            return;
+        }
+
         if (keyValues.length % 2 == 1) {
             throw new SsdbException("Length of parameters must be odd");
         }
@@ -261,6 +266,11 @@ public class SsdbClient extends AbstractClient {
     }
 
     public void multiSet(List<KeyValue> keyValues) {
+
+        if (keyValues == null || keyValues.isEmpty()) {
+            return;
+        }
+
         String[] command = new String[keyValues.size() * 2 + 1];
         command[0] = "multi_set";
 
