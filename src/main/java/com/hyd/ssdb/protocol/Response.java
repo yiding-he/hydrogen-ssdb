@@ -127,7 +127,7 @@ public class Response {
         for (int i = 0; i + 1 < blocks.size(); i += 2) {
             String key = blocks.get(i);
             String value = blocks.get(i + 1);
-            idScores.add(new IdScore(key, Integer.parseInt(value)));
+            idScores.add(new IdScore(key, Long.parseLong(value)));
         }
 
         return idScores;
