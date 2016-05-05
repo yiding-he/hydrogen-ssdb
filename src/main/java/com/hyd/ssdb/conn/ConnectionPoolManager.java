@@ -112,6 +112,8 @@ public class ConnectionPoolManager {
             }
 
             ConnectionPool connectionPool = createConnectionPool(server);
+            connectionPool.setTestOnReturn(true);
+            connectionPool.setTestOnBorrow(true);
             connectionPoolMap.put(server, connectionPool);
             return connectionPool;
         }

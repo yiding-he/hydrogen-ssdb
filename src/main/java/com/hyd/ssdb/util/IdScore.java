@@ -10,12 +10,12 @@ public class IdScore {
 
     private String id;
 
-    private int score;
+    private long score;
 
     public IdScore() {
     }
 
-    public IdScore(String id, int score) {
+    public IdScore(String id, long score) {
         this.id = id;
         this.score = score;
     }
@@ -28,11 +28,11 @@ public class IdScore {
         this.id = id;
     }
 
-    public int getScore() {
+    public long getScore() {
         return score;
     }
 
-    public void setScore(int score) {
+    public void setScore(long score) {
         this.score = score;
     }
 }
