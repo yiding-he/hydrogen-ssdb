@@ -14,7 +14,8 @@ import java.util.List;
  * 表示一个集群。集群是负载均衡的基本单位，一个集群里面可以配置一台或多台服务器（{@link Server}）。
  * 这个类里面几个方法标上了 synchronized，考虑到：一个 Cluster 最多只会包含几台十几台服务器，
  * synchronized 方法执行速度会很快，而且服务器的变更不会很频繁，所以没有使用复杂的同步方式。
- * fillMasters() 方法没有加上 synchronized 是因为它在构造方法中执行，Cluster 的构造方法不会被多线程访问。
+ * fillMasters() 方法没有加上 synchronized 是因为它在构造方法中执行，构造方法不会被多线程访问。
+ *
  * created at 15-12-3
  *
  * @author Yiding

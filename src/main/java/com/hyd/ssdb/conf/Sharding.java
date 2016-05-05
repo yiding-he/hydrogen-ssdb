@@ -8,7 +8,7 @@ import java.util.List;
 
 /**
  * 根据服务器的拓扑结构，决定一个请求应该被发送到哪台服务器
- *
+ * <p>
  * created at 15-12-3
  *
  * @author Yiding
@@ -86,6 +86,11 @@ public abstract class Sharding {
         return null;
     }
 
+    /**
+     * 报告无法连接的 Cluster
+     *
+     * @param cluster 无法连接的 Cluster
+     */
     public void reportInvalidCluster(Cluster cluster) {
         clusterFailed(cluster);
     }

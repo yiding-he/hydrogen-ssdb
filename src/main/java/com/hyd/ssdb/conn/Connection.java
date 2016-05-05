@@ -123,7 +123,7 @@ public class Connection {
                             status = 3;
                             dataCounter = 0;
                         }
-                    } else { // status == 3
+                    } else { // status == 3 包已读取完毕，此时必须收到 \n
                         throw new SsdbException("Illegal packet: " + Arrays.toString(bos.toByteArray()));
                     }
                 }
