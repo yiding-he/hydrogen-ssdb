@@ -33,9 +33,9 @@ public class Request {
 
     private void readTokens(Object[] tokens) {
 
-        // 一个命令至少有 command 和 key 两个部分，然后可能有后面其他参数
-        if (tokens.length < 2) {
-            throw new SsdbException("Command '" + tokens[0] + "' has no parameters or not supported.");
+        // info、dsize等命令只有 command，其他命令至少有 command 和 key 两个部分，然后可能有后面其他参数
+        if (tokens.length < 1) {
+            throw new SsdbException("Command empty.");
         }
 
         this.header = new Block(tokens[0].toString());
@@ -61,6 +61,10 @@ public class Request {
     }
 
     public String getKey() {
+		// info、dsize等命令 blocks.size() == 0
+		if (blocks.size() == 0) {
+			return "";
+		}
         return blocks.get(0).toString();    // 第一个参数一定是 key，用来决定其放在哪台服务器上
     }
 
