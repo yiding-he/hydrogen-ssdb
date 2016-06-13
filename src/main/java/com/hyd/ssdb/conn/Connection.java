@@ -103,10 +103,14 @@ public class Connection {
                         numSb.setLength(0);
                         status = 2;
                     } else if (status == 2) {
-                        dataCounter += 1;
-                        if (dataCounter >= dataLength) {
-                            status = 3;
-                            dataCounter = 0;
+                        if (dataLength == 0) {
+                            status = 0;
+                        } else {
+                            dataCounter += 1;
+                            if (dataCounter >= dataLength) {
+                                status = 3;
+                                dataCounter = 0;
+                            }
                         }
                     } else { // status == 3
                         status = 0;
