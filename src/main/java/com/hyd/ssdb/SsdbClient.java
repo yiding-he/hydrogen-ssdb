@@ -3,7 +3,7 @@ package com.hyd.ssdb;
 import com.hyd.ssdb.conf.Cluster;
 import com.hyd.ssdb.conf.Server;
 import com.hyd.ssdb.conf.Sharding;
-import com.hyd.ssdb.protocol.Response;
+import com.hyd.ssdb.protocol.Response2;
 import com.hyd.ssdb.sharding.ConsistentHashSharding;
 import com.hyd.ssdb.util.IdScore;
 import com.hyd.ssdb.util.KeyValue;
@@ -81,12 +81,12 @@ public class SsdbClient extends AbstractClient {
     //////////////////////////////////////////////////////////////
 
     public long dbsize() {
-        Response response = sendRequest("dbsize");
+        Response2 response = sendRequest("dbsize");
         return Long.parseLong(response.firstBlock());
     }
 
     public String info() {
-        Response response = sendRequest("info");
+        Response2 response = sendRequest("info");
         return response.joinBlocks('\n');
     }
 
@@ -414,6 +414,8 @@ public class SsdbClient extends AbstractClient {
 
     /**
      * 获取 id 的排名，从小到大，0 表示第一位
+     *
+     * 注意，根据文档 http://www.ideawu.net/blog/archives/752.html ，该命令存在性能问题，请慎用
      *
      * @param key id 所处的 zset 的 key
      * @param id  id

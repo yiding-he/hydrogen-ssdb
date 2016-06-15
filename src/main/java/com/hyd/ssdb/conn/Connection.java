@@ -82,69 +82,6 @@ public class Connection {
         }
     }
 
-    public byte[] receivePacket() {
-
-        ByteArrayOutputStream bos = null;
-
-        try {
-            InputStream inputStream = this.socket.getInputStream();
-            bos = new ByteArrayOutputStream(10240);
-            StringBuilder numSb = new StringBuilder();
-
-            int b;
-            int dataLength = 0, dataCounter = 0;
-            int status = 0; // 0=ready, 1=receiving_length, 2=receiving_data, 3=data_finished
-            while ((b = inputStream.read()) != -1) {
-                bos.write(b);
-
-                if (b == '\n') {
-                    if (status == 0) {
-                        return bos.toByteArray();  // 方法唯一的正确出口
-                    } else if (status == 1) {
-                        dataLength = Integer.parseInt(numSb.toString());
-                        numSb.setLength(0);
-                        status = 2;
-                    } else if (status == 2) {
-                        dataCounter += 1;
-                        if (dataCounter >= dataLength) {
-                            status = 3;
-                            dataCounter = 0;
-                        }
-                    } else { // status == 3
-                        status = 0;
-                    }
-                } else {
-                    if (status == 0) {
-                        status = 1;
-                        numSb.append((char) b);
-                    } else if (status == 1) {
-                        numSb.append((char) b);
-                    } else if (status == 2) {
-                        dataCounter += 1;
-                        if (dataCounter >= dataLength) {
-                            status = 3;
-                            dataCounter = 0;
-                        }
-                    } else { // status == 3 包已读取完毕，此时必须收到 \n
-                        throw new SsdbException("Illegal packet: " + Arrays.toString(bos.toByteArray()));
-                    }
-                }
-            }
-
-            throw new SsdbException("Invalid packet");
-        } catch (SocketTimeoutException e) {
-            this.available = false;
-            throw new SsdbSocketFailedException("Socket timed out, already read: " +
-                    (bos == null ? "" : new String(bos.toByteArray())), e);
-        } catch (IOException e) {
-            this.available = false;
-            throw new SsdbSocketFailedException(e);
-        } catch (SsdbException e) {
-            this.available = false;
-            throw e;
-        }
-    }
-
     public Response2 receivePacket2() {
 
         ByteArrayOutputStream bos = null;
@@ -161,13 +98,13 @@ public class Connection {
             int blockStatus = 0; // 0=ready, 1=receiving_length, 2=receiving_data, 3=data_finished
             int responseStatus = 0; //0=ready, 1=head_received
             while ((b = inputStream.read()) != -1) {
-                bos.write(b);
 
                 if (b == '\n') {
                     if (blockStatus == 0) {
                         return response;  // 方法唯一的正确出口
                     } else if (blockStatus == 1) {
                         dataLength = Integer.parseInt(numSb.toString());
+                        bos.reset();
                         numSb.setLength(0);
 
                         // 如果数据长度为 0，则跳过状态2
@@ -178,6 +115,7 @@ public class Connection {
                         }
 
                     } else if (blockStatus == 2) {
+                        bos.write(b);
                         dataCounter += 1;
                         if (dataCounter >= dataLength) {
                             blockStatus = 3;
@@ -194,6 +132,8 @@ public class Connection {
                         }
                     }
                 } else {
+                    bos.write(b);
+
                     if (blockStatus == 0) {
                         blockStatus = 1;
                         numSb.append((char) b);
