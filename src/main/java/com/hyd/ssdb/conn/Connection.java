@@ -82,7 +82,7 @@ public class Connection {
         }
     }
 
-    public Response receivePacket2() {
+    public Response receivePacket() {
 
         ByteArrayOutputStream bos = null;
         Response response = new Response();

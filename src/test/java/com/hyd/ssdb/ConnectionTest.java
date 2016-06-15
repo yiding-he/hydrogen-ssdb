@@ -18,12 +18,12 @@ public class ConnectionTest {
         Connection connection = new Connection("localhost", 8881, 1000);
 
         connection.send(new Request("set name hydrogen-ssdb").toBytes());
-        Response response1 = connection.receivePacket2();
+        Response response1 = connection.receivePacket();
         System.out.println(response1.getHead().toString());
         System.out.println(response1.getBody());
 
         connection.send(new Request("get name").toBytes());
-        Response response2 = connection.receivePacket2();
+        Response response2 = connection.receivePacket();
         System.out.println(response2.getHead().toString());
         System.out.println(response2.getBody());
     }

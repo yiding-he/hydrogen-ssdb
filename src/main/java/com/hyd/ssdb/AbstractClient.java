@@ -133,7 +133,7 @@ public abstract class AbstractClient {
     private Response sendRequest(Request request, Connection connection) {
         try {
             connection.send(request.toBytes());
-            Response response = connection.receivePacket2();
+            Response response = connection.receivePacket();
             checkResponse(request.getHeader().toString(), response);
             return response;
 
