@@ -6,7 +6,7 @@ import com.hyd.ssdb.conn.ConnectionPool;
 import com.hyd.ssdb.conn.ConnectionPoolManager;
 import com.hyd.ssdb.conn.PoolAndConnection;
 import com.hyd.ssdb.protocol.Request;
-import com.hyd.ssdb.protocol.Response2;
+import com.hyd.ssdb.protocol.Response;
 import com.hyd.ssdb.protocol.WriteRequest;
 import com.hyd.ssdb.util.IdScore;
 import com.hyd.ssdb.util.KeyValue;
@@ -50,7 +50,7 @@ public abstract class AbstractClient {
      *
      * @return 执行结果
      */
-    public Response2 sendRequest(String command) {
+    public Response sendRequest(String command) {
         return sendRequest(new Request(command));
     }
 
@@ -61,7 +61,7 @@ public abstract class AbstractClient {
      *
      * @return 执行结果
      */
-    public Response2 sendWriteRequest(Object... tokens) {
+    public Response sendWriteRequest(Object... tokens) {
         return sendRequest(new WriteRequest(tokens));
     }
 
@@ -72,7 +72,7 @@ public abstract class AbstractClient {
      *
      * @return 执行结果
      */
-    public Response2 sendRequest(Object... tokens) {
+    public Response sendRequest(Object... tokens) {
         return sendRequest(new Request(tokens));
     }
 
@@ -83,11 +83,11 @@ public abstract class AbstractClient {
      *
      * @return 执行结果
      */
-    public Response2 sendRequest(Request request) {
+    public Response sendRequest(Request request) {
         String key = request.getKey();
         boolean write = request instanceof WriteRequest;
         boolean needResend = false;
-        Response2 response = null;
+        Response response = null;
 
         // 这是一个在失败时重新发送请求的循环。
         // 发送请求会遇到下面几种失败情况，分别有对应的 catch 块：
@@ -130,10 +130,10 @@ public abstract class AbstractClient {
     }
 
     // 发送一个命令，但不会把连接返回给连接池（内部使用）
-    private Response2 sendRequest(Request request, Connection connection) {
+    private Response sendRequest(Request request, Connection connection) {
         try {
             connection.send(request.toBytes());
-            Response2 response = connection.receivePacket2();
+            Response response = connection.receivePacket2();
             checkResponse(request.getHeader().toString(), response);
             return response;
 
@@ -181,7 +181,7 @@ public abstract class AbstractClient {
     }
 
     // 检查服务器回应，如果是错误回应则抛出一个异常
-    private void checkResponse(String requestHeader, Response2 response) {
+    private void checkResponse(String requestHeader, Response response) {
         String header = response.getHead().toString();
         LOG.debug("RESPONSE(" + requestHeader + "): [" + header + "] - (" + response.getBody().size() + " blocks)");
 

@@ -1,7 +1,7 @@
 package com.hyd.ssdb;
 
 import com.hyd.ssdb.protocol.Request;
-import com.hyd.ssdb.protocol.Response2;
+import com.hyd.ssdb.protocol.Response;
 import com.hyd.ssdb.util.Bytes;
 import com.hyd.ssdb.util.IdScore;
 import com.hyd.ssdb.util.KeyValue;
@@ -27,7 +27,7 @@ public class SsdbClientTest extends BaseTest {
 
     @Test
     public void testSendRequest() throws Exception {
-        Response2 response = this.ssdbClient.sendRequest(new Request("get name"));
+        Response response = this.ssdbClient.sendRequest(new Request("get name"));
         System.out.println(response.getHead());
         System.out.println(response.getBlocks());
     }

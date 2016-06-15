@@ -4,7 +4,7 @@ import com.hyd.ssdb.SsdbException;
 import com.hyd.ssdb.SsdbSocketFailedException;
 import com.hyd.ssdb.conf.Server;
 import com.hyd.ssdb.protocol.Block;
-import com.hyd.ssdb.protocol.Response2;
+import com.hyd.ssdb.protocol.Response;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -82,10 +82,10 @@ public class Connection {
         }
     }
 
-    public Response2 receivePacket2() {
+    public Response receivePacket2() {
 
         ByteArrayOutputStream bos = null;
-        Response2 response = new Response2();
+        Response response = new Response();
 
         try {
             InputStream inputStream = this.socket.getInputStream();

@@ -14,13 +14,13 @@ import java.util.Map;
  *
  * @author yiding_he
  */
-public class Response2 {
+public class Response {
 
     private Block head;
 
     private List<Block> body = new ArrayList<Block>();
 
-    public Response2() {
+    public Response() {
     }
 
     public Block getHead() {
