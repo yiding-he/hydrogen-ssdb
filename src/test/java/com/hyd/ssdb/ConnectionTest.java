@@ -1,10 +1,8 @@
 package com.hyd.ssdb;
 
-import com.hyd.ssdb.conf.Server;
 import com.hyd.ssdb.conn.Connection;
-import com.hyd.ssdb.conn.ConnectionPool;
 import com.hyd.ssdb.protocol.Request;
-import com.hyd.ssdb.protocol.Response;
+import com.hyd.ssdb.protocol.Response2;
 import org.junit.Test;
 
 /**
@@ -16,28 +14,17 @@ import org.junit.Test;
 public class ConnectionTest {
 
     @Test
-    public void testSend() throws Exception {
-        // Connection connection = new Connection("heyiding.com", 27364);
-        Connection connection = new Connection("192.168.1.180", 8888, 1000);
-        Response response;
+    public void testReceive2() throws Exception {
+        Connection connection = new Connection("localhost", 8881, 1000);
 
-        connection.send(new Request("set name heyiding").toBytes());
-        response = new Response(connection.receivePacket());
-        System.out.println(response.getHeader());
-        System.out.println(response.getBlocks());
-
+        connection.send(new Request("set name hydrogen-ssdb").toBytes());
+        Response2 response1 = connection.receivePacket2();
+        System.out.println(response1.getHead().toString());
+        System.out.println(response1.getBody());
 
         connection.send(new Request("get name").toBytes());
-        response = new Response(connection.receivePacket());
-        System.out.println(response.getHeader());
-        System.out.println(response.getBlocks());
-
-        connection.close();
-    }
-
-    @Test(expected = SsdbSocketFailedException.class)
-    public void testConnectionFail() throws Exception {
-        ConnectionPool connectionPool = new ConnectionPool(new Server("localhost", 12345));
-        connectionPool.borrowObject();
+        Response2 response2 = connection.receivePacket2();
+        System.out.println(response2.getHead().toString());
+        System.out.println(response2.getBody());
     }
 }

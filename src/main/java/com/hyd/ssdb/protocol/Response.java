@@ -66,6 +66,27 @@ public class Response {
         }
     }
 
+    public Response() {
+    }
+
+    public void setHeader(String header) {
+        this.header = header;
+    }
+
+    public void setHeader(Block block) {
+        setHeader(block.toString());
+    }
+
+    public void setBlocks(List<Block> blocks) {
+        List<String> result = new ArrayList<String>();
+
+        for (Block block : blocks) {
+            result.add(block.toString());
+        }
+
+        this.blocks = result;
+    }
+
     public String getHeader() {
         return header;
     }
@@ -143,6 +164,10 @@ public class Response {
         }
 
         return map;
+    }
+
+    public void setContent(byte[] content) {
+        this.content = content;
     }
 
     public byte[] getBytes() {

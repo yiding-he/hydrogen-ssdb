@@ -7,6 +7,7 @@ import com.hyd.ssdb.conn.ConnectionPoolManager;
 import com.hyd.ssdb.conn.PoolAndConnection;
 import com.hyd.ssdb.protocol.Request;
 import com.hyd.ssdb.protocol.Response;
+import com.hyd.ssdb.protocol.Response2;
 import com.hyd.ssdb.protocol.WriteRequest;
 import com.hyd.ssdb.util.IdScore;
 import com.hyd.ssdb.util.KeyValue;
@@ -133,9 +134,9 @@ public abstract class AbstractClient {
     private Response sendRequest(Request request, Connection connection) {
         try {
             connection.send(request.toBytes());
-            byte[] respBytes = connection.receivePacket();
+            Response2 response2 = connection.receivePacket2();
 
-            Response response = new Response(respBytes);
+            Response response = response2.toResponse();
             checkResponse(request.getHeader().toString(), response);
             return response;
 

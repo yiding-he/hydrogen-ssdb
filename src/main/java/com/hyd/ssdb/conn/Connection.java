@@ -3,6 +3,8 @@ package com.hyd.ssdb.conn;
 import com.hyd.ssdb.SsdbException;
 import com.hyd.ssdb.SsdbSocketFailedException;
 import com.hyd.ssdb.conf.Server;
+import com.hyd.ssdb.protocol.Block;
+import com.hyd.ssdb.protocol.Response2;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -121,6 +123,86 @@ public class Connection {
                         dataCounter += 1;
                         if (dataCounter >= dataLength) {
                             status = 3;
+                            dataCounter = 0;
+                        }
+                    } else { // status == 3 包已读取完毕，此时必须收到 \n
+                        throw new SsdbException("Illegal packet: " + Arrays.toString(bos.toByteArray()));
+                    }
+                }
+            }
+
+            throw new SsdbException("Invalid packet");
+        } catch (SocketTimeoutException e) {
+            this.available = false;
+            throw new SsdbSocketFailedException("Socket timed out, already read: " +
+                    (bos == null ? "" : new String(bos.toByteArray())), e);
+        } catch (IOException e) {
+            this.available = false;
+            throw new SsdbSocketFailedException(e);
+        } catch (SsdbException e) {
+            this.available = false;
+            throw e;
+        }
+    }
+
+    public Response2 receivePacket2() {
+
+        ByteArrayOutputStream bos = null;
+        Response2 response = new Response2();
+
+        try {
+            InputStream inputStream = this.socket.getInputStream();
+            bos = new ByteArrayOutputStream(10240);
+            StringBuilder numSb = new StringBuilder();
+
+
+            int b;
+            int dataLength = 0, dataCounter = 0;
+            int blockStatus = 0; // 0=ready, 1=receiving_length, 2=receiving_data, 3=data_finished
+            int responseStatus = 0; //0=ready, 1=head_received
+            while ((b = inputStream.read()) != -1) {
+                bos.write(b);
+
+                if (b == '\n') {
+                    if (blockStatus == 0) {
+                        return response;  // 方法唯一的正确出口
+                    } else if (blockStatus == 1) {
+                        dataLength = Integer.parseInt(numSb.toString());
+                        numSb.setLength(0);
+
+                        // 如果数据长度为 0，则跳过状态2
+                        if (dataLength == 0) {
+                            blockStatus = 3;
+                        } else {
+                            blockStatus = 2;
+                        }
+
+                    } else if (blockStatus == 2) {
+                        dataCounter += 1;
+                        if (dataCounter >= dataLength) {
+                            blockStatus = 3;
+                            dataCounter = 0;
+                        }
+                    } else { // status == 3
+                        blockStatus = 0;
+
+                        if (responseStatus == 0) {
+                            response.setHead(new Block(bos.toByteArray()));
+                            responseStatus = 1;
+                        } else {
+                            response.addBodyBlock(new Block(bos.toByteArray()));
+                        }
+                    }
+                } else {
+                    if (blockStatus == 0) {
+                        blockStatus = 1;
+                        numSb.append((char) b);
+                    } else if (blockStatus == 1) {
+                        numSb.append((char) b);
+                    } else if (blockStatus == 2) {
+                        dataCounter += 1;
+                        if (dataCounter >= dataLength) {
+                            blockStatus = 3;
                             dataCounter = 0;
                         }
                     } else { // status == 3 包已读取完毕，此时必须收到 \n
