@@ -420,4 +420,15 @@ public class SsdbClientTest extends BaseTest {
             }
         });
     }
+
+    @Test
+    public void testZget() throws Exception {
+        ssdbClient.zclear("yuwen");
+        ssdbClient.zclear("shuxue");
+        ssdbClient.zset("yuwen", "zhangsan", 100);
+        ssdbClient.zset("yuwen", "lisi", 101);
+        assertEquals(100, ssdbClient.zget("yuwen", "zhangsan"));
+        assertEquals(-1, ssdbClient.zget("yuwen", "wangwu"));
+        assertEquals(-1, ssdbClient.zget("shuxue", "wangwu"));
+    }
 }
