@@ -27,7 +27,6 @@ public class SsdbClient extends AbstractClient {
      *
      * @param host 服务器地址
      * @param port 服务器端口
-     *
      * @throws SsdbException 如果连接服务器失败
      */
     public SsdbClient(String host, int port) throws SsdbException {
@@ -37,6 +36,10 @@ public class SsdbClient extends AbstractClient {
     // 创建只连接到一台服务器的 SsdbClient 对象
     public SsdbClient(String host, int port, int timeoutSeconds) throws SsdbException {
         super(new ConsistentHashSharding(Cluster.fromSingleServer(host, port, timeoutSeconds)));
+    }
+
+    public SsdbClient(String host, int port, int timeoutSeconds, int bufferSize) throws SsdbException {
+        super(new ConsistentHashSharding(Cluster.fromSingleServer(host, port, timeoutSeconds, bufferSize)));
     }
 
     // 创建只连接到一台服务器的，带密码的 SsdbClient 对象
@@ -414,12 +417,11 @@ public class SsdbClient extends AbstractClient {
 
     /**
      * 获取 id 的排名，从小到大，0 表示第一位
-     *
+     * <p>
      * 注意，根据文档 http://www.ideawu.net/blog/archives/752.html ，该命令存在性能问题，请慎用
      *
      * @param key id 所处的 zset 的 key
      * @param id  id
-     *
      * @return 排名，如果 id 不在 key 当中则返回 -1
      */
     public int zrank(String key, String id) {
@@ -445,7 +447,6 @@ public class SsdbClient extends AbstractClient {
      * @param key             zset 的 key
      * @param minScoreInclude score 最小值（含），Integer.MIN_VALUE 表示无最小值
      * @param maxScoreInclude score 最大值（含），Integer.MAX_VALUE 表示无最大值
-     *
      * @return score 在 minScoreInclude 与 maxScoreInclude 之间的 id 数量
      */
     public int zcount(String key, int minScoreInclude, int maxScoreInclude) {
@@ -472,7 +473,6 @@ public class SsdbClient extends AbstractClient {
      * @param key            zset 的 key
      * @param minRankInclude 最小排名（含），最小值为 0
      * @param maxRankInclude 最大排名（含），最大值为 zset 的大小
-     *
      * @return 被删除的 id 的数量
      */
     public int zremrangebyrank(String key, int minRankInclude, int maxRankInclude) {
@@ -599,7 +599,6 @@ public class SsdbClient extends AbstractClient {
      * @param startKeyExclude 起始名字（不含，可选）
      * @param endKeyInclude   结束名字（含，可选）
      * @param limit           最多返回记录数
-     *
      * @return 指定区间的 queue/list 的 key 列表
      */
     public List<String> qlist(String startKeyExclude, String endKeyInclude, int limit) {

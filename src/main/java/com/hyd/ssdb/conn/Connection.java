@@ -27,17 +27,19 @@ public class Connection {
     private Socket socket;      // 网络连接套接字
 
     private boolean available;  // 是否已经不再可用
+    private int buffer;         // 读取数据时缓存区的长度
 
     private Map<String, Object> properties = new HashMap<String, Object>();   // 其他属性
 
     public Connection(Server server) {
-        this(server.getHost(), server.getPort(), server.getSocketConfig().getSoTimeout());
+        this(server.getHost(), server.getPort(), server.getSocketConfig().getSoTimeout(), server.getSocketConfig().getSoBufferSize());
     }
 
-    public Connection(String host, int port, int soTimeout) {
+    public Connection(String host, int port, int soTimeout, int soBuffer) {
         try {
             this.socket = new Socket(host, port);
             this.socket.setSoTimeout(soTimeout);
+            this.buffer = soBuffer;
             this.available = true;
             this.properties.put("host", host);
             this.properties.put("port", port);
@@ -97,56 +99,67 @@ public class Connection {
             int dataLength = 0, dataCounter = 0;
             int blockStatus = 0; // 0=ready, 1=receiving_length, 2=receiving_data, 3=data_finished
             int responseStatus = 0; //0=ready, 1=head_received
-            while ((b = inputStream.read()) != -1) {
 
-                if (b == '\n') {
-                    if (blockStatus == 0) {
-                        return response;  // 方法唯一的正确出口
-                    } else if (blockStatus == 1) {
-                        dataLength = Integer.parseInt(numSb.toString());
-                        bos.reset();
-                        numSb.setLength(0);
 
-                        // 如果数据长度为 0，则跳过状态2
-                        if (dataLength == 0) {
-                            blockStatus = 3;
-                        } else {
-                            blockStatus = 2;
+            byte[] bs = new byte[this.buffer];
+
+            while (true) {
+                int len = inputStream.read(bs);
+                if (len == -1) {
+                    break;
+                }
+
+                for (int i = 0; i < len; i++) {
+                    b = bs[i];
+                    if (b == '\n') {
+                        if (blockStatus == 0) {
+                            return response;  // 方法唯一的正确出口
+                        } else if (blockStatus == 1) {
+                            dataLength = Integer.parseInt(numSb.toString());
+                            bos.reset();
+                            numSb.setLength(0);
+
+                            // 如果数据长度为 0，则跳过状态2
+                            if (dataLength == 0) {
+                                blockStatus = 3;
+                            } else {
+                                blockStatus = 2;
+                            }
+
+                        } else if (blockStatus == 2) {
+                            bos.write(b);
+                            dataCounter += 1;
+                            if (dataCounter >= dataLength) {
+                                blockStatus = 3;
+                                dataCounter = 0;
+                            }
+                        } else { // status == 3
+                            blockStatus = 0;
+
+                            if (responseStatus == 0) {
+                                response.setHead(new Block(bos.toByteArray()));
+                                responseStatus = 1;
+                            } else {
+                                response.addBodyBlock(new Block(bos.toByteArray()));
+                            }
                         }
-
-                    } else if (blockStatus == 2) {
+                    } else {
                         bos.write(b);
-                        dataCounter += 1;
-                        if (dataCounter >= dataLength) {
-                            blockStatus = 3;
-                            dataCounter = 0;
-                        }
-                    } else { // status == 3
-                        blockStatus = 0;
 
-                        if (responseStatus == 0) {
-                            response.setHead(new Block(bos.toByteArray()));
-                            responseStatus = 1;
-                        } else {
-                            response.addBodyBlock(new Block(bos.toByteArray()));
+                        if (blockStatus == 0) {
+                            blockStatus = 1;
+                            numSb.append((char) b);
+                        } else if (blockStatus == 1) {
+                            numSb.append((char) b);
+                        } else if (blockStatus == 2) {
+                            dataCounter += 1;
+                            if (dataCounter >= dataLength) {
+                                blockStatus = 3;
+                                dataCounter = 0;
+                            }
+                        } else { // status == 3 包已读取完毕，此时必须收到 \n
+                            throw new SsdbException("Illegal packet: " + Arrays.toString(bos.toByteArray()));
                         }
-                    }
-                } else {
-                    bos.write(b);
-
-                    if (blockStatus == 0) {
-                        blockStatus = 1;
-                        numSb.append((char) b);
-                    } else if (blockStatus == 1) {
-                        numSb.append((char) b);
-                    } else if (blockStatus == 2) {
-                        dataCounter += 1;
-                        if (dataCounter >= dataLength) {
-                            blockStatus = 3;
-                            dataCounter = 0;
-                        }
-                    } else { // status == 3 包已读取完毕，此时必须收到 \n
-                        throw new SsdbException("Illegal packet: " + Arrays.toString(bos.toByteArray()));
                     }
                 }
             }
