@@ -325,10 +325,9 @@ public class SsdbClientTest extends BaseTest {
 
     @Test
     public void testZlist() throws Exception {
-        ssdbClient.zclear("zkey");
-        ssdbClient.zset("zkey", "user1", 123);
-        List<String> keys = ssdbClient.zlist("", "", 100);
-        assertTrue(keys.contains("zkey"));
+        ssdbClient.zset("zkey:1", "user1", 123);
+        List<String> keys = ssdbClient.zlist("zkey:", "", 100);
+        assertTrue(keys.contains("zkey:1"));
     }
 
     @Test
