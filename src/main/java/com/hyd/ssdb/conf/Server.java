@@ -42,12 +42,20 @@ public class Server {
         this.socketConfig.setSoTimeout(timeoutSeconds * 1000);
     }
 
+    public Server(String host, int port, int timeoutSeconds, int bufferSize) {
+        this.host = host;
+        this.port = port;
+        this.socketConfig.setSoTimeout(timeoutSeconds * 1000);
+        this.socketConfig.setSoBufferSize(bufferSize);
+    }
+
     public Server(String host, int port, String pass, boolean master) {
         this.host = host;
         this.port = port;
         this.pass = pass;
         this.master = master;
     }
+
 
     public Server(String host, int port, String pass, boolean master, int soTimeout, int poolMaxTotal) {
         this.host = host;
@@ -57,6 +65,7 @@ public class Server {
         this.socketConfig.setSoTimeout(soTimeout);
         this.poolConfig.setMaxTotal(poolMaxTotal);
     }
+
 
     private GenericObjectPoolConfig createDefaultPoolConfig() {
         GenericObjectPoolConfig config = new GenericObjectPoolConfig();

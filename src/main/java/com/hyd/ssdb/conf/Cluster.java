@@ -88,6 +88,9 @@ public class Cluster {
         return fromSingleServer(new Server(host, port, timeoutSeconds));
     }
 
+    public static Cluster fromSingleServer(String host, int port, int timeoutSeconds, int bufferSize) {
+        return fromSingleServer(new Server(host, port, timeoutSeconds, bufferSize));
+    }
     public static Cluster fromSingleServer(String host, int port, String pass) {
         return fromSingleServer(new Server(host, port, pass));
     }
