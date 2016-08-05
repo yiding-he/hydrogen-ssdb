@@ -56,7 +56,6 @@ public class Server {
         this.master = master;
     }
 
-
     public Server(String host, int port, String pass, boolean master, int soTimeout, int poolMaxTotal) {
         this.host = host;
         this.port = port;
@@ -64,6 +63,34 @@ public class Server {
         this.master = master;
         this.socketConfig.setSoTimeout(soTimeout);
         this.poolConfig.setMaxTotal(poolMaxTotal);
+    }
+
+    public Server(String host, int port, String pass, boolean master, SocketConfig socketConfig) {
+        this.host = host;
+        this.port = port;
+        this.pass = pass;
+        this.master = master;
+
+        if (socketConfig != null) {
+            this.socketConfig = socketConfig;
+        }
+    }
+
+    public Server(String host, int port, String pass, boolean master,
+                  SocketConfig socketConfig, GenericObjectPoolConfig poolConfig) {
+
+        this.host = host;
+        this.port = port;
+        this.pass = pass;
+        this.master = master;
+
+        if (socketConfig != null) {
+            this.socketConfig = socketConfig;
+        }
+
+        if (poolConfig != null) {
+            this.poolConfig = poolConfig;
+        }
     }
 
 

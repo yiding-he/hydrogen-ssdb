@@ -3,6 +3,7 @@ package com.hyd.ssdb;
 import com.hyd.ssdb.conf.Cluster;
 import com.hyd.ssdb.conf.Server;
 import com.hyd.ssdb.conf.Sharding;
+import com.hyd.ssdb.conf.SocketConfig;
 import com.hyd.ssdb.protocol.Response;
 import com.hyd.ssdb.sharding.ConsistentHashSharding;
 import com.hyd.ssdb.util.IdScore;
@@ -20,6 +21,7 @@ import java.util.Map;
  *
  * @author Yiding
  */
+@SuppressWarnings({"WeakerAccess", "unused"})
 public class SsdbClient extends AbstractClient {
 
     /**
@@ -44,7 +46,8 @@ public class SsdbClient extends AbstractClient {
 
     // 创建只连接到一台服务器的，带密码的 SsdbClient 对象
     public SsdbClient(String host, int port, int timeoutSeconds, String pass) throws SsdbException {
-        super(new ConsistentHashSharding(Cluster.fromSingleServer(host, port, pass)));
+        super(new ConsistentHashSharding(Cluster.fromSingleServer(
+                host, port, pass, timeoutSeconds, SocketConfig.DEFAULT_SO_BUFFER_SIZE)));
     }
 
     // 创建只连接到一台服务器的，带密码的 SsdbClient 对象
@@ -83,11 +86,15 @@ public class SsdbClient extends AbstractClient {
 
     //////////////////////////////////////////////////////////////
 
+    // 暂时禁用
+    @Deprecated
     public long dbsize() {
         Response response = sendRequest("dbsize");
         return Long.parseLong(response.firstBlock());
     }
 
+    // 暂时禁用
+    @Deprecated
     public String info() {
         Response response = sendRequest("info");
         return response.joinBlocks('\n');
@@ -152,8 +159,14 @@ public class SsdbClient extends AbstractClient {
     public void del(String... keys) {
         if (keys.length == 1) {
             sendWriteRequest("del", keys[0]);
+
         } else if (keys.length > 1) {
-            sendWriteRequest((Object[]) prependCommand("multi_del", keys));
+            // 需要根据 Cluster 分组，将适合放到同一个 Cluster 的 key 分到同一组
+            List<String[]> keysList = splitKeys(keys);
+            for (String[] keyArr : keysList) {
+                sendWriteRequest((Object[]) prependCommand("multi_del", keyArr));
+            }
+
         }
     }
 
@@ -161,7 +174,11 @@ public class SsdbClient extends AbstractClient {
         if (keys.size() == 1) {
             sendWriteRequest("del", keys.get(0));
         } else {
-            sendWriteRequest((Object[]) prependCommand("multi_del", keys.toArray(new String[keys.size()])));
+            // 需要根据 Cluster 分组，将适合放到同一个 Cluster 的 key 分到同一组
+            List<String[]> keysList = splitKeys(keys);
+            for (String[] keyArr : keysList) {
+                sendWriteRequest((Object[]) prependCommand("multi_del", keyArr));
+            }
         }
     }
 
@@ -264,8 +281,11 @@ public class SsdbClient extends AbstractClient {
             throw new SsdbException("Length of parameters must be odd");
         }
 
-        String[] command = prependCommand("multi_set", keyValues);
-        sendWriteRequest((Object[]) command);
+        List<String[]> keyValuesList = splitKeyValues(keyValues);
+        for (String[] keyValueArr : keyValuesList) {
+            String[] command = prependCommand("multi_set", keyValueArr);
+            sendWriteRequest((Object[]) command);
+        }
     }
 
     public void multiSet(List<KeyValue> keyValues) {
@@ -274,16 +294,21 @@ public class SsdbClient extends AbstractClient {
             return;
         }
 
-        String[] command = new String[keyValues.size() * 2 + 1];
-        command[0] = "multi_set";
+        // 每个元素对应一个 Cluster
+        List<List<KeyValue>> keyValueLists = splitKeyValues(keyValues);
 
-        for (int i = 0; i < keyValues.size(); i++) {
-            KeyValue keyValue = keyValues.get(i);
-            command[i * 2 + 1] = keyValue.getKey();
-            command[i * 2 + 2] = keyValue.getValue();
+        for (List<KeyValue> keyValueList : keyValueLists) {
+            String[] command = new String[keyValueList.size() * 2 + 1];
+            command[0] = "multi_set";
+
+            for (int i = 0; i < keyValueList.size(); i++) {
+                KeyValue keyValue = keyValueList.get(i);
+                command[i * 2 + 1] = keyValue.getKey();
+                command[i * 2 + 2] = keyValue.getValue();
+            }
+
+            sendWriteRequest((Object[]) command);
         }
-
-        sendWriteRequest((Object[]) command);
     }
 
     //////////////////////////////////////////////////////////////// hashmap commands

@@ -1,5 +1,6 @@
 package com.hyd.ssdb;
 
+import com.hyd.ssdb.conf.Cluster;
 import com.hyd.ssdb.conf.Sharding;
 import com.hyd.ssdb.conn.Connection;
 import com.hyd.ssdb.conn.ConnectionPool;
@@ -12,13 +13,17 @@ import com.hyd.ssdb.util.IdScore;
 import com.hyd.ssdb.util.KeyValue;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 实现 SsdbClient 的一些底层方法
  *
  * @author Yiding
  */
+@SuppressWarnings("WeakerAccess")
 public abstract class AbstractClient {
 
     static final org.slf4j.Logger LOG = LoggerFactory.getLogger(AbstractClient.class);
@@ -110,7 +115,7 @@ public abstract class AbstractClient {
             } catch (SsdbClientException e) {
                 LOG.error("Connection error", e);
 
-                // 标记不可用的服务器，这样下次调用 getConnectionPool() 就会切换到其他服务器了
+                // 标记不可用的服务器，这样下次循环就会切换到其他服务器了
                 connectionPoolManager.reportInvalidConnection(connection);
                 needResend = true;
             } catch (SsdbServerException e) {
@@ -141,42 +146,6 @@ public abstract class AbstractClient {
             throw e;
         } catch (Exception e) {
             throw new SsdbException(e);
-        }
-    }
-
-    /**
-     * 从连接池获取连接。如果需要登录，则自动发送一个登录请求
-     *
-     * @param connectionPool 连接池
-     *
-     * @return 连接
-     *
-     * @throws Exception 如果获取连接失败
-     */
-    private Connection getConnection(ConnectionPool connectionPool) throws Exception {
-
-        Connection connection = connectionPool.borrowObject();
-        if (connection == null) {
-            throw new SsdbException("No available connection");
-        }
-
-        String pass = connectionPool.getConnectionFactory().getServer().getPass();
-        automaticLogin(pass, connection);
-        return connection;
-    }
-
-    // 检查并自动发送登录请求
-    private void automaticLogin(String pass, Connection connection) {
-        boolean loggedIn = connection.hasProperty("authenticated");
-
-        if (!loggedIn) {
-            boolean havePass = pass != null;
-            if (havePass) {
-                sendRequest(new Request("auth", pass));
-            }
-
-            // 不管是否真的需要验证，都设置 authenticated 属性为 1，这样下次就跳过这个判断了
-            connection.setProperty("authenticated", 1);
         }
     }
 
@@ -265,20 +234,84 @@ public abstract class AbstractClient {
     }
 
     /**
-     * 如果字符串为 null 或只包含空白字符，则替换为 def；否则返回字符串本身
+     * 根据 Sharding 对 key 列表进行分组
      *
-     * @param s   要替换的字符串
-     * @param def 缺省值
+     * @param keys 要进行分组的 key 列表
      *
-     * @return 替换后的字符串
+     * @return 分组结果
      */
-    public String def(String s, String def) {
-        if (s == null) {
-            return def;
-        } else if (s.trim().length() == 0) {
-            return def;
-        } else {
-            return s;
+    protected List<String[]> splitKeys(String[] keys) {
+
+        // {clusterId -> List<key>}
+        Map<String, List<String>> groups = new HashMap<String, List<String>>();
+
+        for (String key : keys) {
+            Cluster cluster = getSharding().getClusterByKey(key);
+            String clusterId = cluster.getId();
+
+            if (!groups.containsKey(clusterId)) {
+                groups.put(clusterId, new ArrayList<String>());
+            }
+
+            groups.get(clusterId).add(key);
         }
+
+        ArrayList<String[]> result = new ArrayList<String[]>();
+        for (List<String> keyList : groups.values()) {
+            result.add(keyList.toArray(new String[keyList.size()]));
+        }
+
+        return result;
+    }
+
+    protected List<String[]> splitKeys(List<String> keys) {
+        return splitKeys(keys.toArray(new String[keys.size()]));
+    }
+
+    protected List<String[]> splitKeyValues(String[] keyValues) {
+
+        // {clusterId -> List<key,value,...>}
+        Map<String, List<String>> groups = new HashMap<String, List<String>>();
+
+        for (int i = 0; i < keyValues.length; i += 2) {
+            String key = keyValues[i];
+            String value = keyValues[i + 1];
+            Cluster cluster = getSharding().getClusterByKey(key);
+            String clusterId = cluster.getId();
+
+            if (!groups.containsKey(clusterId)) {
+                groups.put(clusterId, new ArrayList<String>());
+            }
+
+            groups.get(clusterId).add(key);
+            groups.get(clusterId).add(value);
+        }
+
+        ArrayList<String[]> result = new ArrayList<String[]>();
+        for (List<String> keyList : groups.values()) {
+            result.add(keyList.toArray(new String[keyList.size()]));
+        }
+
+        return result;
+    }
+
+    protected List<List<KeyValue>> splitKeyValues(List<KeyValue> keyValues) {
+
+        // {clusterId -> List<key,value,...>}
+        Map<String, List<KeyValue>> groups = new HashMap<String, List<KeyValue>>();
+
+        for (KeyValue keyValue : keyValues) {
+            String key = keyValue.getKey();
+            Cluster cluster = getSharding().getClusterByKey(key);
+            String clusterId = cluster.getId();
+
+            if (!groups.containsKey(clusterId)) {
+                groups.put(clusterId, new ArrayList<KeyValue>());
+            }
+
+            groups.get(clusterId).add(keyValue);
+        }
+
+        return new ArrayList<List<KeyValue>>(groups.values());
     }
 }

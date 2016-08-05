@@ -7,8 +7,17 @@ package com.hyd.ssdb.conf;
  */
 public class SocketConfig {
 
+    /**
+     * 缺省 Socket 超时时间
+     */
     public static final int DEFAULT_SO_TIMEOUT = 1000;
+
+    /**
+     * 缺省缓冲区大小
+     */
     public static final int DEFAULT_SO_BUFFER_SIZE = 8 * 1024;
+
+    //////////////////////////////////////////////////////////////
 
     private int soTimeout = DEFAULT_SO_TIMEOUT;
 

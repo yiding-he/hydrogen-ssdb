@@ -67,15 +67,19 @@ public class ConsistentHashSharding extends Sharding {
 
         clusters.add(newCluster);
         Range<Integer> prevClusterRange = rangeMap.get(prevCluster);
+
         int prevMax = prevClusterRange.getMax();
+
+        // newCluster 和 prevCluster 的哈希段分配仍然依据各自的 weight 权重
         int split = prevClusterRange.getMin() +
                 (prevClusterRange.getMax() - prevClusterRange.getMin()) * prevCluster.getWeight()
                         / (prevCluster.getWeight() + newCluster.getWeight());
 
+        // 更新 prevCluster 范围
         prevClusterRange.setMax(split);
 
-        Range<Integer> newClusterRange = new Range<Integer>(split + 1, prevMax);
-        rangeMap.put(newCluster, newClusterRange);
+        // 更新 newCluster 范围
+        rangeMap.put(newCluster, new Range<Integer>(split + 1, prevMax));
     }
 
     @Override
@@ -102,13 +106,17 @@ public class ConsistentHashSharding extends Sharding {
             int min, max;
 
             if (i == clusters.size() - 1) {
+                // 如果是最后一个节点，则 max 设为 Integer 的最大值
                 min = ((int) (pointer + Integer.MIN_VALUE) + 1);
                 max = (Integer.MAX_VALUE);
                 setClusterRange(cluster, min, max);
 
             } else {
+                // 非最后一个节点，则
+                // 如果是第一个节点，则 min 为 Integer 的最小值，否则 min 为上一个节点最大值 + 1
                 min = i == 0 ? Integer.MIN_VALUE : (int) (pointer + Integer.MIN_VALUE) + 1;
 
+                // 非最后节点的 max 值计算：根据 weight 计算节点的哈希段占比（含值个数），加上 min 值即可
                 weightcounter += cluster.getWeight();
                 pointer = maxrange * weightcounter / maxWeight;
                 max = ((int) (pointer + Integer.MIN_VALUE));
@@ -124,7 +132,7 @@ public class ConsistentHashSharding extends Sharding {
     }
 
     @Override
-    public void clusterFailed(Cluster invalidCluster) {
+    public synchronized void clusterFailed(Cluster invalidCluster) {
         if (invalidCluster == null) {
             return;
         }
