@@ -73,7 +73,7 @@ public abstract class Sharding {
     //////////////////////////////////////////////////////////////
 
     public List<Cluster> getClusters() {
-        return clusters;
+        return Collections.unmodifiableList(clusters);
     }
 
     public Cluster getClusterById(String id) {
