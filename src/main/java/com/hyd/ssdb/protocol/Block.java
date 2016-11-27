@@ -5,6 +5,8 @@ import com.hyd.ssdb.util.Bytes;
 
 import java.io.UnsupportedEncodingException;
 
+import static com.hyd.ssdb.protocol.ProtocolConfig.DEFAULT_CHARSET;
+
 /**
  * 一个区块。当发送区块时，按照 '长度\n内容\n' 的格式发送
  * created at 15-11-30
@@ -12,6 +14,8 @@ import java.io.UnsupportedEncodingException;
  * @author Yiding
  */
 public class Block {
+
+    private String charset = DEFAULT_CHARSET;
 
     private byte[] data;
 
@@ -24,11 +28,19 @@ public class Block {
             this.data = new byte[0];
         } else {
             try {
-                this.data = data.getBytes("UTF-8");
+                this.data = data.getBytes(this.charset);
             } catch (UnsupportedEncodingException e) {
                 throw new SsdbException(e);
             }
         }
+    }
+
+    public String getCharset() {
+        return charset;
+    }
+
+    public void setCharset(String charset) {
+        this.charset = charset;
     }
 
     /**
@@ -38,7 +50,7 @@ public class Block {
      */
     public byte[] toBytes() {
         try {
-            byte[] length = (String.valueOf(data.length) + "\n").getBytes("UTF-8");
+            byte[] length = (String.valueOf(data.length) + "\n").getBytes(this.charset);
             return Bytes.concat(length, data, new byte[]{'\n'});
         } catch (UnsupportedEncodingException e) {
             throw new SsdbException(e);
@@ -48,7 +60,7 @@ public class Block {
     @Override
     public String toString() {
         try {
-            return new String(this.data, "UTF-8");
+            return new String(this.data, this.charset);
         } catch (UnsupportedEncodingException e) {
             throw new SsdbException(e);
         }

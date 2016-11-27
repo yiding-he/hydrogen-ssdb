@@ -27,6 +27,7 @@ public class Connection {
     private Socket socket;      // 网络连接套接字
 
     private boolean available;  // 是否已经不再可用
+
     private int buffer;         // 读取数据时缓存区的长度
 
     private Map<String, Object> properties = new HashMap<String, Object>();   // 其他属性
@@ -114,6 +115,7 @@ public class Connection {
                     if (b == '\n') {
                         if (blockStatus == 0) {
                             return response;  // 方法唯一的正确出口
+
                         } else if (blockStatus == 1) {
                             dataLength = Integer.parseInt(numSb.toString());
                             bos.reset();
@@ -133,7 +135,8 @@ public class Connection {
                                 blockStatus = 3;
                                 dataCounter = 0;
                             }
-                        } else { // status == 3
+
+                        } else { // blockStatus == 3
                             blockStatus = 0;
 
                             if (responseStatus == 0) {

@@ -6,6 +6,8 @@ import com.hyd.ssdb.util.Bytes;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.hyd.ssdb.protocol.ProtocolConfig.DEFAULT_CHARSET;
+
 /**
  * 请求
  * created at 15-11-30
@@ -13,6 +15,8 @@ import java.util.List;
  * @author Yiding
  */
 public class Request {
+
+    private String charset = DEFAULT_CHARSET;
 
     private Block header;
 
@@ -31,6 +35,14 @@ public class Request {
         readTokens(tokens);
     }
 
+    public void setCharset(String charset) {
+        this.charset = charset;
+    }
+
+    public String getCharset() {
+        return charset;
+    }
+
     private void readTokens(Object[] tokens) {
 
         // 一个命令至少有 command 和 key 两个部分，然后可能有后面其他参数
@@ -39,6 +51,7 @@ public class Request {
         }
 
         this.header = new Block(tokens[0].toString());
+        this.header.setCharset(this.charset);
 
         for (int i = 1; i < tokens.length; i++) {
             Object token = tokens[i];
@@ -48,6 +61,7 @@ public class Request {
             } else {
                 block = new Block(token.toString());
             }
+            block.setCharset(this.charset);
             this.blocks.add(block);
         }
     }

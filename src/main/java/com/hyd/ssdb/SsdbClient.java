@@ -29,6 +29,7 @@ public class SsdbClient extends AbstractClient {
      *
      * @param host 服务器地址
      * @param port 服务器端口
+     *
      * @throws SsdbException 如果连接服务器失败
      */
     public SsdbClient(String host, int port) throws SsdbException {
@@ -106,6 +107,13 @@ public class SsdbClient extends AbstractClient {
         return sendRequest("get", key).firstBlock();
     }
 
+    /**
+     * 获取字节内容。注意，只有当 set 进去的内容为 byte[] 时，才应当使用 getBytes() 来取，否则得到的内容很可能是不完整的。
+     *
+     * @param key 键
+     *
+     * @return 值
+     */
     public byte[] getBytes(String key) {
         return sendRequest("get", key).getBytes();
     }
@@ -447,6 +455,7 @@ public class SsdbClient extends AbstractClient {
      *
      * @param key id 所处的 zset 的 key
      * @param id  id
+     *
      * @return 排名，如果 id 不在 key 当中则返回 -1
      */
     public int zrank(String key, String id) {
@@ -472,6 +481,7 @@ public class SsdbClient extends AbstractClient {
      * @param key             zset 的 key
      * @param minScoreInclude score 最小值（含），Integer.MIN_VALUE 表示无最小值
      * @param maxScoreInclude score 最大值（含），Integer.MAX_VALUE 表示无最大值
+     *
      * @return score 在 minScoreInclude 与 maxScoreInclude 之间的 id 数量
      */
     public int zcount(String key, int minScoreInclude, int maxScoreInclude) {
@@ -498,6 +508,7 @@ public class SsdbClient extends AbstractClient {
      * @param key            zset 的 key
      * @param minRankInclude 最小排名（含），最小值为 0
      * @param maxRankInclude 最大排名（含），最大值为 zset 的大小
+     *
      * @return 被删除的 id 的数量
      */
     public int zremrangebyrank(String key, int minRankInclude, int maxRankInclude) {
@@ -624,6 +635,7 @@ public class SsdbClient extends AbstractClient {
      * @param startKeyExclude 起始名字（不含，可选）
      * @param endKeyInclude   结束名字（含，可选）
      * @param limit           最多返回记录数
+     *
      * @return 指定区间的 queue/list 的 key 列表
      */
     public List<String> qlist(String startKeyExclude, String endKeyInclude, int limit) {
