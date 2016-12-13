@@ -57,6 +57,10 @@ public class Block {
         }
     }
 
+    public byte[] getData() {
+        return data;
+    }
+
     @Override
     public String toString() {
         try {

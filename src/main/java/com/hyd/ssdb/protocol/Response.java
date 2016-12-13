@@ -65,8 +65,9 @@ public class Response {
         }
     }
 
+    // 以字节的方式返回数据
     public byte[] getBytes() {
-        return this.body.isEmpty() ? new byte[0] : this.body.get(0).toBytes();
+        return this.body.isEmpty() ? new byte[0] : this.body.get(0).getData();
     }
 
     public int getIntResult() {

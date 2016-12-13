@@ -240,7 +240,7 @@ public class SsdbClientTest extends BaseTest {
 
     @Test
     public void testScanAllKeys() throws Exception {
-        List<KeyValue> keyValues = ssdbClient.scan("", "", 1000);
+        List<KeyValue> keyValues = ssdbClient.scan("", "", 100);
         for (KeyValue keyValue : keyValues) {
             System.out.println(keyValue);
         }
