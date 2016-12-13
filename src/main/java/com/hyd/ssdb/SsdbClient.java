@@ -362,11 +362,11 @@ public class SsdbClient extends AbstractClient {
     }
 
     public List<KeyValue> hgetall(String key) {
-        return sendRequest("hgtall", key).getKeyValues();
+        return sendRequest("hgetall", key).getKeyValues();
     }
 
     public Map<String, String> hgetallmap(String key) {
-        return sendRequest("hgtall", key).getBlocksAsMap();
+        return sendRequest("hgetall", key).getBlocksAsMap();
     }
 
     public List<KeyValue> hscan(String key, String startExclude, String endInclude, int limit) {
