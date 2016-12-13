@@ -65,6 +65,7 @@
             <groupId>com.esotericsoftware</groupId>
             <artifactId>kryo</artifactId>
             <version>4.0.0</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 
