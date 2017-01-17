@@ -54,8 +54,11 @@ public class SsdbClientTest extends BaseTest {
 
     @Test
     public void testSetGet() throws Exception {
-        ssdbClient.set("name", "123123123123123123123123");
-        System.out.println(ssdbClient.get("name"));
+        ssdbClient.set("name", "111");
+        assertEquals("111", ssdbClient.get("name"));
+
+        ssdbClient.set("value", "-1");
+        assertEquals("-1", ssdbClient.get("value"));
     }
 
     @Test
@@ -73,6 +76,11 @@ public class SsdbClientTest extends BaseTest {
         ssdbClient.expire("name", 1);
         Thread.sleep(1500);
         assertNull(ssdbClient.get("name"));
+    }
+
+    @Test
+    public void testExpireCommand() throws Exception {
+        System.out.println(ssdbClient.expire("invalid_key", 10));
     }
 
     @Test
@@ -189,6 +197,7 @@ public class SsdbClientTest extends BaseTest {
         String str = "hello, everyone";
         ssdbClient.set("key", str);
         assertEquals(str.length(), ssdbClient.strlen("key"));
+        assertEquals(0, ssdbClient.strlen("invlaid_key"));
     }
 
     @Test
@@ -321,6 +330,29 @@ public class SsdbClientTest extends BaseTest {
         ssdbClient.zset("zkey", "user3", 789);
 
         assertEquals(3, ssdbClient.zsize("zkey"));
+    }
+
+    @Test
+    public void testMultiZget() throws Exception {
+        ssdbClient.zclear("zkey");
+        ssdbClient.multiZset("zkey", Arrays.asList(
+                new IdScore("user1", -1),
+                new IdScore("user2", 0),
+                new IdScore("user3", 1)
+        ));
+
+        List<IdScore> idScores = ssdbClient.multiZget("user1", "user2", "user3");
+        assertEquals(3, idScores.size());
+        System.out.println(idScores);
+    }
+
+    @Test
+    public void testZsetMinusValue() throws Exception {
+        ssdbClient.zclear("zkey");
+        ssdbClient.zset("zkey", "user1", -1);
+        assertEquals(-1, ssdbClient.zget("zkey", "user1"));
+
+        System.out.println(ssdbClient.zget("zkey", "user2"));
     }
 
     @Test

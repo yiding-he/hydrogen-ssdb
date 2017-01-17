@@ -459,12 +459,12 @@ public class SsdbClient extends AbstractClient {
      * @return 排名，如果 id 不在 key 当中则返回 -1
      */
     public int zrank(String key, String id) {
-        return sendRequest("zrank", key, id).getIntResult();
+        return sendRequest("zrank", key, id).getIntResult(-1);
     }
 
     // 同上，从大到小排名
     public int zrrank(String key, String id) {
-        return sendRequest("zrrank", key, id).getIntResult();
+        return sendRequest("zrrank", key, id).getIntResult(-1);
     }
 
     public List<IdScore> zrange(String key, int offset, int limit) {
@@ -487,19 +487,19 @@ public class SsdbClient extends AbstractClient {
     public int zcount(String key, int minScoreInclude, int maxScoreInclude) {
         String strMin = minScoreInclude == Integer.MIN_VALUE ? "" : String.valueOf(minScoreInclude);
         String strMax = maxScoreInclude == Integer.MAX_VALUE ? "" : String.valueOf(maxScoreInclude);
-        return sendRequest("zcount", key, strMin, strMax).getIntResult();
+        return sendRequest("zcount", key, strMin, strMax).getIntResult(0);
     }
 
-    public long zsum(String key, int minScoreInclude, int maxScoreInclude) {
+    public Long zsum(String key, int minScoreInclude, int maxScoreInclude) {
         String strMin = minScoreInclude == Integer.MIN_VALUE ? "" : String.valueOf(minScoreInclude);
         String strMax = maxScoreInclude == Integer.MAX_VALUE ? "" : String.valueOf(maxScoreInclude);
-        return sendRequest("zsum", key, strMin, strMax).getLongResult();
+        return sendRequest("zsum", key, strMin, strMax).getLongResult(0);
     }
 
     public long zavg(String key, int minScoreInclude, int maxScoreInclude) {
         String strMin = minScoreInclude == Integer.MIN_VALUE ? "" : String.valueOf(minScoreInclude);
         String strMax = maxScoreInclude == Integer.MAX_VALUE ? "" : String.valueOf(maxScoreInclude);
-        return sendRequest("zavg", key, strMin, strMax).getLongResult();
+        return sendRequest("zavg", key, strMin, strMax).getLongResult(0);
     }
 
     /**
@@ -530,11 +530,15 @@ public class SsdbClient extends AbstractClient {
     }
 
     public void multiZset(String key, List<IdScore> idScores) {
-        sendWriteRequest(prependCommandIdScore("multi_zset", key, idScores));
+        sendWriteRequest((Object[]) prependCommandIdScore("multi_zset", key, idScores));
     }
 
     public List<IdScore> multiZget(String key, List<String> ids) {
-        return sendRequest(prependCommand("multi_zget", key, ids)).getIdScores();
+        return sendRequest((Object[]) prependCommand("multi_zget", key, ids)).getIdScores();
+    }
+
+    public List<IdScore> multiZget(String key, String... ids) {
+        return multiZget(key, Arrays.asList(ids));
     }
 
     public void multiZdel(String key, List<String> ids) {

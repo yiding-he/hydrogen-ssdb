@@ -70,18 +70,28 @@ public class Response {
         return this.body.isEmpty() ? new byte[0] : this.body.get(0).getData();
     }
 
-    public int getIntResult() {
+    public Integer getIntResult() {
         if (this.head.toString().equals("not_found")) {
-            return -1;
+            return null;
         }
         return this.body.isEmpty() ? 0 : Integer.parseInt(this.body.get(0).toString());
     }
 
-    public long getLongResult() {
+    public int getIntResult(int defaultValue) {
+        Integer result = getIntResult();
+        return result == null ? defaultValue : result;
+    }
+
+    public Long getLongResult() {
         if (this.head.toString().equals("not_found")) {
-            return -1;
+            return null;
         }
         return this.body.isEmpty() ? 0 : Long.parseLong(this.body.get(0).toString());
+    }
+
+    public long getLongResult(long defaultValue) {
+        Long result = getLongResult();
+        return result == null ? defaultValue : result;
     }
 
     public List<String> getBlocks() {
