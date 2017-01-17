@@ -462,4 +462,25 @@ public class SsdbClientTest extends BaseTest {
         assertEquals(-1, ssdbClient.zget("yuwen", "wangwu"));
         assertEquals(-1, ssdbClient.zget("shuxue", "wangwu"));
     }
+
+    @Test
+    public void testZscan() throws Exception {
+        ssdbClient.zclear("zkey");
+        ssdbClient.zset("zkey", "a", 99);
+        ssdbClient.zset("zkey", "b", 100);
+        ssdbClient.zset("zkey", "c", 101);
+
+        List<String> zkeys = ssdbClient.zkeys("zkey", null, 1L, 100L, 10);
+        assertEquals(2, zkeys.size());
+        assertEquals("a", zkeys.get(0));
+        assertEquals("b", zkeys.get(1));
+
+        // zscan
+        assertEquals(2, ssdbClient.zscan("zkey", null, 1L, 100L, 10).size());
+        assertEquals(1, ssdbClient.zscan("zkey", "a", 99L, 100L, 10).size());
+        assertEquals(0, ssdbClient.zscan("zkey", null, 200L, 300L, 10).size());
+
+        // zrscan
+        assertEquals(1, ssdbClient.zrscan("zkey", "b", null, null, 10).size());
+    }
 }

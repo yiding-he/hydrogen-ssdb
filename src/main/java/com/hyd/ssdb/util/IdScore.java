@@ -35,4 +35,12 @@ public class IdScore {
     public void setScore(long score) {
         this.score = score;
     }
+
+    @Override
+    public String toString() {
+        return "IdScore{" +
+                "id='" + id + '\'' +
+                ", score=" + score +
+                '}';
+    }
 }

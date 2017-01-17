@@ -126,6 +126,17 @@ public class Response {
         return idScores;
     }
 
+    public List<String> getIds() {
+        List<String> ids = new ArrayList<String>();
+
+        for (int i = 0; i + 1 < body.size(); i += 2) {
+            String key = body.get(i).toString();
+            ids.add(key);
+        }
+
+        return ids;
+    }
+
     public Map<String, String> getBlocksAsMap() {
 
         Map<String, String> map = new HashMap<String, String>();

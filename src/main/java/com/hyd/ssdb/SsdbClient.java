@@ -6,9 +6,7 @@ import com.hyd.ssdb.conf.Sharding;
 import com.hyd.ssdb.conf.SocketConfig;
 import com.hyd.ssdb.protocol.Response;
 import com.hyd.ssdb.sharding.ConsistentHashSharding;
-import com.hyd.ssdb.util.IdScore;
-import com.hyd.ssdb.util.KeyValue;
-import com.hyd.ssdb.util.Processor;
+import com.hyd.ssdb.util.*;
 
 import java.util.Arrays;
 import java.util.List;
@@ -436,16 +434,42 @@ public class SsdbClient extends AbstractClient {
         return sendRequest("zlist", startExclude, endInclude, limit).getBlocks();
     }
 
-    public List<String> zkeys(String key, String startExclude, String endInclude, int limit) {
-        return sendRequest("zkeys", key, startExclude, endInclude, limit).getBlocks();
+    public List<String> zkeys(String key, String keyStartExclude, Long scoreStartInclude, Long scoreEndInclude, int limit) {
+        return sendRequest("zscan", key,
+                Str.ifBlank(keyStartExclude, ""),
+                Num.ifNull(scoreStartInclude, ""),
+                Num.ifNull(scoreEndInclude, ""),
+                limit
+        ).getIds();
     }
 
-    public List<IdScore> zscan(String key, String startExclude, String endInclude, int limit) {
-        return sendRequest("zscan", key, startExclude, endInclude, limit).getIdScores();
+    /**
+     * (这命令真别扭)
+     *
+     * @param key               zset 的 key
+     * @param keyStartExclude   （可选）key 的开始值
+     * @param scoreStartInclude （可选）score 的最小值，为空表示无限小(-inf)
+     * @param scoreEndInclude   （可选）score 的最大值，为空表示无限大(+inf)
+     * @param limit             最多返回记录数
+     *
+     * @return 查询结果
+     */
+    public List<IdScore> zscan(String key, String keyStartExclude, Long scoreStartInclude, Long scoreEndInclude, int limit) {
+        return sendRequest("zscan", key,
+                Str.ifBlank(keyStartExclude, ""),
+                Num.ifNull(scoreStartInclude, ""),
+                Num.ifNull(scoreEndInclude, ""),
+                limit
+        ).getIdScores();
     }
 
-    public List<IdScore> zrscan(String key, String startExclude, String endInclude, int limit) {
-        return sendRequest("zrscan", key, startExclude, endInclude, limit).getIdScores();
+    public List<IdScore> zrscan(String key, String keyStartExclude, Long scoreStartInclude, Long scoreEndInclude, int limit) {
+        return sendRequest("zrscan", key,
+                Str.ifBlank(keyStartExclude, ""),
+                Num.ifNull(scoreStartInclude, ""),
+                Num.ifNull(scoreEndInclude, ""),
+                limit
+        ).getIdScores();
     }
 
     /**
