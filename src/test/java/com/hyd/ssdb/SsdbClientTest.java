@@ -335,22 +335,23 @@ public class SsdbClientTest extends BaseTest {
     @Test
     public void testMultiZget() throws Exception {
         ssdbClient.zclear("zkey");
-        ssdbClient.multiZset("zkey", Arrays.asList(
+        long setCount = ssdbClient.multiZset("zkey", Arrays.asList(
                 new IdScore("user1", -1),
                 new IdScore("user2", 0),
                 new IdScore("user3", 1)
         ));
 
-        List<IdScore> idScores = ssdbClient.multiZget("user1", "user2", "user3");
+        assertEquals(3, setCount);
+
+        List<IdScore> idScores = ssdbClient.multiZget("zkey", "user1", "user2", "user3");
         assertEquals(3, idScores.size());
-        System.out.println(idScores);
     }
 
     @Test
     public void testZsetMinusValue() throws Exception {
         ssdbClient.zclear("zkey");
         ssdbClient.zset("zkey", "user1", -1);
-        assertEquals(-1, ssdbClient.zget("zkey", "user1"));
+        assertEquals(new Long(-1), ssdbClient.zget("zkey", "user1"));
 
         System.out.println(ssdbClient.zget("zkey", "user2"));
     }
@@ -458,9 +459,9 @@ public class SsdbClientTest extends BaseTest {
         ssdbClient.zclear("shuxue");
         ssdbClient.zset("yuwen", "zhangsan", 100);
         ssdbClient.zset("yuwen", "lisi", 101);
-        assertEquals(100, ssdbClient.zget("yuwen", "zhangsan"));
-        assertEquals(-1, ssdbClient.zget("yuwen", "wangwu"));
-        assertEquals(-1, ssdbClient.zget("shuxue", "wangwu"));
+        assertEquals(100, ssdbClient.zget("yuwen", "zhangsan").longValue());
+        assertNull(ssdbClient.zget("yuwen", "wangwu"));
+        assertNull(ssdbClient.zget("shuxue", "wangwu"));
     }
 
     @Test

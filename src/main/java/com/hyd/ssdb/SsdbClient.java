@@ -410,7 +410,7 @@ public class SsdbClient extends AbstractClient {
         sendWriteRequest("zset", key, id, score);
     }
 
-    public long zget(String key, String id) {
+    public Long zget(String key, String id) {
         return sendRequest("zget", key, id).getLongResult();
     }
 
@@ -553,8 +553,12 @@ public class SsdbClient extends AbstractClient {
         return sendWriteRequest("zpop_back", key, limit).getIdScores();
     }
 
-    public void multiZset(String key, List<IdScore> idScores) {
-        sendWriteRequest((Object[]) prependCommandIdScore("multi_zset", key, idScores));
+    public long multiZset(String key, IdScore... idScores) {
+        return multiZset(key, Arrays.asList(idScores));
+    }
+
+    public long multiZset(String key, List<IdScore> idScores) {
+        return sendWriteRequest((Object[]) prependCommandIdScore("multi_zset", key, idScores)).getLongResult(0);
     }
 
     public List<IdScore> multiZget(String key, List<String> ids) {
@@ -566,13 +570,13 @@ public class SsdbClient extends AbstractClient {
     }
 
     public void multiZdel(String key, List<String> ids) {
-        sendWriteRequest(prependCommand("multi_zdel", key, ids));
+        sendWriteRequest((Object[]) prependCommand("multi_zdel", key, ids));
     }
 
     //////////////////////////////////////////////////////////////
 
     public int qpushFront(String key, String... values) {
-        return sendWriteRequest(prependCommand("qpush_front", key, values)).getIntResult();
+        return sendWriteRequest((Object[]) prependCommand("qpush_front", key, values)).getIntResult();
     }
 
     public int qpushFront(String key, byte[] bytes) {
@@ -580,7 +584,7 @@ public class SsdbClient extends AbstractClient {
     }
 
     public int qpushBack(String key, String... values) {
-        return sendWriteRequest(prependCommand("qpush_back", key, values)).getIntResult();
+        return sendWriteRequest((Object[]) prependCommand("qpush_back", key, values)).getIntResult();
     }
 
     public int qpushBack(String key, byte[] bytes) {
