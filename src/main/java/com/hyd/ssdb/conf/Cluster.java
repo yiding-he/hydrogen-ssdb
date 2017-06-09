@@ -15,7 +15,7 @@ import java.util.List;
  * 这个类里面几个方法标上了 synchronized，考虑到：一个 Cluster 最多只会包含几台十几台服务器，
  * synchronized 方法执行速度会很快，而且服务器的变更不会很频繁，所以没有使用复杂的同步方式。
  * fillMasters() 方法没有加上 synchronized 是因为它在构造方法中执行，构造方法不会被多线程访问。
- *
+ * <p>
  * created at 15-12-3
  *
  * @author Yiding
@@ -210,10 +210,30 @@ public class Cluster {
         LOG.error("Removing invalid server " + invalid);
 
         this.servers.remove(invalid);
-        this.masters.remove(invalid);
+        if (invalid.isMaster()) {
+            this.masters.remove(invalid);
+        }
 
         if (!this.invalidServers.contains(invalid)) {
             this.invalidServers.add(invalid);
+        }
+    }
+
+    /**
+     * 将服务器标记为有效的
+     *
+     * @param server 恢复正常的服务器
+     */
+    public synchronized void markValid(Server server) {
+        LOG.info("Server " + server + " restored.");
+
+        this.servers.add(server);
+        if (server.isMaster()) {
+            this.masters.add(server);
+        }
+
+        if (this.invalidServers.contains(server)) {
+            this.invalidServers.remove(server);
         }
     }
 

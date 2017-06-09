@@ -67,8 +67,10 @@ public abstract class Sharding {
      * 当某个 Cluster 下线（即 Cluster 中的所有的服务器都不可用）时的处理（交给子类实现）
      *
      * @param invalidCluster 下线的 Cluster
+     *
+     * @return 是否允许选择其他的 Cluster
      */
-    protected abstract void clusterFailed(Cluster invalidCluster);
+    public abstract boolean clusterFailed(Cluster invalidCluster);
 
     //////////////////////////////////////////////////////////////
 
@@ -84,14 +86,5 @@ public abstract class Sharding {
         }
 
         return null;
-    }
-
-    /**
-     * 报告无法连接的 Cluster
-     *
-     * @param cluster 无法连接的 Cluster
-     */
-    public void reportInvalidCluster(Cluster cluster) {
-        clusterFailed(cluster);
     }
 }

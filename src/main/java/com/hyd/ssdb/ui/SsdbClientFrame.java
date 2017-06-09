@@ -4,8 +4,7 @@ import javax.swing.*;
 import java.awt.*;
 
 /**
- * (description)
- * created at 16/04/19
+ * Swing UI (not finished)
  *
  * @author yiding_he
  */

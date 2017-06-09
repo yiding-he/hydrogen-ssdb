@@ -132,17 +132,20 @@ public class ConsistentHashSharding extends Sharding {
     }
 
     @Override
-    public synchronized void clusterFailed(Cluster invalidCluster) {
+    public synchronized boolean clusterFailed(Cluster invalidCluster) {
         if (invalidCluster == null) {
-            return;
+            return true;
         }
 
         if (this.spofStrategy == SPOFStrategy.AutoExpandStrategy) {
             autoExpand(invalidCluster);
             clusters.remove(invalidCluster);
+            return true;
+        } else {
+            // 保留 key 空间，直到 Cluster 恢复上线
+            // 在此之前，对该 Cluster 的读写都将失败
+            return false;
         }
-
-        // 否则就保留 key 空间，直到 Cluster 恢复上线
     }
 
     /**

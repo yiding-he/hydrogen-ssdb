@@ -91,7 +91,7 @@ public abstract class AbstractClient {
     public Response sendRequest(Request request) {
         String key = request.getKey();
         boolean write = request instanceof WriteRequest;
-        boolean needResend = false;
+        boolean needResend;
         Response response = null;
 
         // 这是一个在失败时重新发送请求的循环。

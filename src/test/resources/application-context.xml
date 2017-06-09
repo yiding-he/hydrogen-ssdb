@@ -10,13 +10,6 @@
         <constructor-arg name="port" value="8888"/>
     </bean>
 
-    <!-- 自定义 Sharding -->
-    <bean id="custShardingClient" class="com.hyd.ssdb.SsdbClient" destroy-method="close">
-        <constructor-arg name="sharding">
-            <bean class="com.hyd.ssdb.AjiaSharding"/>
-        </constructor-arg>
-    </bean>
-
     <!-- 多台 SSDB 主从服务器的配置 -->
     <bean id="ssdbServer1" class="com.hyd.ssdb.conf.Server">
         <property name="host" value="192.168.1.180"/>

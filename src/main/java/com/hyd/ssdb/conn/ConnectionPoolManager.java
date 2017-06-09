@@ -25,7 +25,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class ConnectionPoolManager {
 
-    static final Logger LOG = LoggerFactory.getLogger(ConnectionPoolManager.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ConnectionPoolManager.class);
 
     private Sharding sharding;  // 负载均衡拓扑结构
 
@@ -70,9 +70,17 @@ public class ConnectionPoolManager {
                     retry = true;
                 }
             } catch (SsdbNoServerAvailableException e) {  // 遇到单点故障，尝试切换 Cluster
-                LOG.error("Connection failed: ", e);
-                sharding.reportInvalidCluster(cluster);
-                retry = true;
+
+                // 向 Sharding 报告 Cluster 无法使用。如果 Sharding 不能接受，则返回 false
+                boolean keepSearching = sharding.clusterFailed(cluster);
+
+                if (!keepSearching) {
+                    throw e;
+                } else {
+                    LOG.error("Connection failed: ", e);
+                    retry = true;
+                    // 当启用 AutoExpandStrategy 时，下次循环会再次调用 getClusterByKey()
+                }
 
             } catch (SsdbNoClusterAvailableException e) {  // 无法再继续尝试切换 Cluster
                 LOG.error("Connection failed: ", e);
