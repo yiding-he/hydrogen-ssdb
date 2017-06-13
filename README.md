@@ -1,6 +1,10 @@
 # hydrogen-ssdb
 Java 编写的 SSDB 客户端
 
+## 更新
+
+* 2017-06-13: 完成了最后一个基本特性的实现，版本号正式改为 1.0.0。
+
 ## 介绍
 
 hydrogen-ssdb 是一个 Java 编写的 [SSDB](https://github.com/ideawu/ssdb)  客户端，支持多线程并发请求和多服务器的负载均衡（客户端分发请求）。
