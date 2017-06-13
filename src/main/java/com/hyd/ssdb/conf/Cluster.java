@@ -2,6 +2,7 @@ package com.hyd.ssdb.conf;
 
 import com.hyd.ssdb.SsdbClientException;
 import com.hyd.ssdb.SsdbNoServerAvailableException;
+import com.hyd.ssdb.conn.ServerMonitorDaemon;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,7 +25,7 @@ public class Cluster {
 
     public static final int DEFAULT_WEIGHT = 100;
 
-    static final Logger LOG = LoggerFactory.getLogger(Cluster.class);
+    private static final Logger LOG = LoggerFactory.getLogger(Cluster.class);
 
     private static final SecureRandom RANDOM = new SecureRandom();
 
@@ -135,6 +136,10 @@ public class Cluster {
         return Collections.unmodifiableList(servers);
     }
 
+    public List<Server> getInvalidServers() {
+        return Collections.unmodifiableList(invalidServers);
+    }
+
     /**
      * 添加一台服务器
      *
@@ -207,7 +212,7 @@ public class Cluster {
      * @param invalid 需要被标记的服务器
      */
     public synchronized void markInvalid(Server invalid) {
-        LOG.error("Removing invalid server " + invalid);
+        LOG.error("Server unavailable: " + invalid);
 
         this.servers.remove(invalid);
         if (invalid.isMaster()) {
@@ -217,6 +222,8 @@ public class Cluster {
         if (!this.invalidServers.contains(invalid)) {
             this.invalidServers.add(invalid);
         }
+
+        ServerMonitorDaemon.addInvalidServer(invalid, this);
     }
 
     /**
@@ -225,7 +232,7 @@ public class Cluster {
      * @param server 恢复正常的服务器
      */
     public synchronized void markValid(Server server) {
-        LOG.info("Server " + server + " restored.");
+        LOG.info("Server restored: " + server);
 
         this.servers.add(server);
         if (server.isMaster()) {
@@ -237,13 +244,22 @@ public class Cluster {
         }
     }
 
-    // TODO 自动检查无效的服务器，当服务器恢复上线时做好相应处理
-
     @Override
     public String toString() {
         return "Cluster{" +
                 "id='" + id + '\'' +
                 ", weight=" + weight +
                 '}';
+    }
+
+    /**
+     * 判断 server 是否属于当前 cluster
+     *
+     * @param server 要判断的 server
+     *
+     * @return 如果属于当前 cluster 则返回 true
+     */
+    public synchronized boolean containsServer(Server server) {
+        return this.servers.contains(server) || this.invalidServers.contains(server);
     }
 }

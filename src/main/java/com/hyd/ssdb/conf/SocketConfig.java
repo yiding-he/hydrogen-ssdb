@@ -19,9 +19,21 @@ public class SocketConfig {
 
     //////////////////////////////////////////////////////////////
 
-    private int soTimeout = DEFAULT_SO_TIMEOUT;
+    private int soTimeout = DEFAULT_SO_TIMEOUT;         // 超时时间 (ms)
 
-    private int soBufferSize = DEFAULT_SO_BUFFER_SIZE;
+    private int soBufferSize = DEFAULT_SO_BUFFER_SIZE;  // 缓存大小 (byte)
+
+    public SocketConfig() {
+    }
+
+    public SocketConfig(int soTimeout) {
+        this.soTimeout = soTimeout;
+    }
+
+    public SocketConfig(int soTimeout, int soBufferSize) {
+        this.soTimeout = soTimeout;
+        this.soBufferSize = soBufferSize;
+    }
 
     /**
      * 获取 Socket 超时时间
