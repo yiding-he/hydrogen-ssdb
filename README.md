@@ -55,14 +55,14 @@ sharding.setSpofStrategy(SPOFStrategy.PreserveKeySpaceStrategy);
 
 所以，`ConsistentHashSharding` 的 `addCluster()` 方法有两个参数，第一个是要添加的 Cluster，第二个是需要被分担负载的 Cluster。
 
-##项目依赖
+## 项目依赖
 
 hydrogen-ssdb 依赖于下面两个框架：
 
 * Apache commons-pool2 （对象池框架）
 * slf4j （日志框架）
 
-##使用方法
+## 使用方法
 
 #### 基本使用方法
 
@@ -70,7 +70,7 @@ hydrogen-ssdb 依赖于下面两个框架：
 SsdbClient client = new SsdbClient(host, port);
 client.set("key", "value");
 System.out.println(client.get("key"));   // output "value"
-client.close();    // 应用停止时需要调用 close() 方法，也可以配置在 Spring 的 destroy-method 中
+client.close();    // 应用结束时需要调用 close() 方法，也可以配置在 Spring 的 destroy-method 中
 ```
 
 #### 配置主从服务器

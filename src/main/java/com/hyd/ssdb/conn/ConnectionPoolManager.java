@@ -7,6 +7,8 @@ import com.hyd.ssdb.SsdbSocketFailedException;
 import com.hyd.ssdb.conf.Cluster;
 import com.hyd.ssdb.conf.Server;
 import com.hyd.ssdb.conf.Sharding;
+import com.hyd.ssdb.protocol.Request;
+import com.hyd.ssdb.protocol.WriteRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,27 +43,37 @@ public class ConnectionPoolManager {
     }
 
     /**
-     * 根据 key 和操作类型获取一个连接。如果 Cluster 的某个服务器无法创建连接，则自动切换
+     * 根据请求获取一个连接。如果 Cluster 的某个服务器无法创建连接，则自动切换
      * 到其他可用的服务器；如果所有的服务器都不可用，则抛出 SsdbNoServerAvailableException
      *
-     * @param key          key
-     * @param write        是否是写入操作
+     * @param request 请求
      *
      * @return 连接和连接池
      */
-    public PoolAndConnection getConnection(String key, boolean write)
+    public PoolAndConnection getConnection(Request request)
             throws SsdbNoServerAvailableException {
+
+        String key = request.getKey();   // 某些命令 key 可能为空
+        boolean write = request instanceof WriteRequest;
         boolean retry = false;
+
         do {
             Cluster cluster = null;
             ConnectionPool connectionPool = null;
             try {
-                cluster = sharding.getClusterByKey(key);
-                connectionPool = pickServer(cluster, write);
+
+                // 如果指定了 forceServer，则 cluster 为空
+                if (request.getForceServer() != null) {
+                    connectionPool = getConnectionPool(request.getForceServer());
+                } else {
+                    cluster = sharding.getClusterByKey(key);
+                    connectionPool = pickServer(cluster, write);
+                }
+
                 Connection connection = connectionPool.borrowObject();
                 return new PoolAndConnection(connectionPool, connection);
 
-            } catch (SsdbSocketFailedException e) { // 表示连接创建失败
+            } catch (SsdbSocketFailedException e) { // 表示 server 连接创建失败
                 LOG.error("Connection failed: ", e);
                 if (connectionPool != null) {
                     Server server = connectionPool.getConnectionFactory().getServer();
@@ -69,8 +81,10 @@ public class ConnectionPoolManager {
                     reportInvalidConnection(server.getHost(), server.getPort());
                     retry = true;
                 }
-            } catch (SsdbNoServerAvailableException e) {  // 遇到单点故障，尝试切换 Cluster
 
+            } catch (SsdbNoServerAvailableException e) {  // 遇到 cluster 单点故障，尝试切换 Cluster
+
+                // 只有未指定 forceServer 才可能抛出这个异常，此时 cluster 一定不为空
                 // 向 Sharding 报告 Cluster 无法使用。如果 Sharding 不能接受，则返回 false
                 boolean keepSearching = sharding.clusterFailed(cluster);
 

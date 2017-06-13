@@ -39,6 +39,7 @@ public class SsdbClient extends AbstractClient {
         super(new ConsistentHashSharding(Cluster.fromSingleServer(host, port, timeoutSeconds)));
     }
 
+    // 创建只连接到一台服务器的 SsdbClient 对象
     public SsdbClient(String host, int port, int timeoutSeconds, int bufferSize) throws SsdbException {
         super(new ConsistentHashSharding(Cluster.fromSingleServer(host, port, timeoutSeconds, bufferSize)));
     }
@@ -85,17 +86,13 @@ public class SsdbClient extends AbstractClient {
 
     //////////////////////////////////////////////////////////////
 
-    // 暂时禁用
-    @Deprecated
-    public long dbsize() {
-        Response response = sendRequest("dbsize");
+    public long dbsize(Server server) {
+        Response response = sendRequest(server, "dbsize");
         return Long.parseLong(response.firstBlock());
     }
 
-    // 暂时禁用
-    @Deprecated
-    public String info() {
-        Response response = sendRequest("info");
+    public String info(Server server) {
+        Response response = sendRequest(server,"info");
         return response.joinBlocks('\n');
     }
 

@@ -1,6 +1,7 @@
 package com.hyd.ssdb;
 
 import com.hyd.ssdb.conf.Cluster;
+import com.hyd.ssdb.conf.Server;
 import com.hyd.ssdb.conf.Sharding;
 import com.hyd.ssdb.conn.Connection;
 import com.hyd.ssdb.conn.ConnectionPool;
@@ -59,6 +60,12 @@ public abstract class AbstractClient {
         return sendRequest(new Request(command));
     }
 
+    public Response sendRequest(Server server, String command) {
+        Request request = new Request(command);
+        request.setForceServer(server);
+        return sendRequest(request);
+    }
+
     /**
      * 发送包含写入操作的命令，每个参数为命令的一部分，例如 "set", "key1", "value1"
      *
@@ -89,8 +96,6 @@ public abstract class AbstractClient {
      * @return 执行结果
      */
     public Response sendRequest(Request request) {
-        String key = request.getKey();
-        boolean write = request instanceof WriteRequest;
         boolean needResend;
         Response response = null;
 
@@ -102,7 +107,7 @@ public abstract class AbstractClient {
         // 3、执行收发完成，但服务器返回的是错误信息，这时候会遇到 SsdbServerException 异常，直接抛出。
         // 4、其他 SsdbException 或 Exception 异常，表示代码逻辑可能存在问题，直接抛出或包装后抛出。
         do {
-            PoolAndConnection poolAndConnection = connectionPoolManager.getConnection(key, write);
+            PoolAndConnection poolAndConnection = connectionPoolManager.getConnection(request);
             ConnectionPool connectionPool = null;
             Connection connection = null;
             try {

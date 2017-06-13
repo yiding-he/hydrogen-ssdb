@@ -1,5 +1,6 @@
 package com.hyd.ssdb;
 
+import com.hyd.ssdb.conf.Server;
 import com.hyd.ssdb.protocol.Request;
 import com.hyd.ssdb.protocol.Response;
 import com.hyd.ssdb.util.Bytes;
@@ -34,14 +35,14 @@ public class SsdbClientTest extends BaseTest {
 
     @Test
     public void testDbsize() throws Exception {
-        // System.out.println(ssdbClient.dbsize());
-        // 暂不支持
+        Server server = ssdbClient.getSharding().getClusters().get(0).getServers().get(0);
+        System.out.println("dbsize of " + server + ": " + ssdbClient.dbsize(server));
     }
 
     @Test
     public void testInfo() throws Exception {
-        // System.out.println(ssdbClient.info());
-        // 暂不支持
+        Server server = ssdbClient.getSharding().getClusters().get(0).getServers().get(0);
+        System.out.println("info of " + server + ": " + ssdbClient.info(server));
     }
 
     @Test

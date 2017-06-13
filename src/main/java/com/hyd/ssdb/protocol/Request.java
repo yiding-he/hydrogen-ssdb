@@ -1,6 +1,7 @@
 package com.hyd.ssdb.protocol;
 
 import com.hyd.ssdb.SsdbException;
+import com.hyd.ssdb.conf.Server;
 import com.hyd.ssdb.util.Bytes;
 
 import java.util.ArrayList;
@@ -20,6 +21,8 @@ public class Request {
 
     private Block header;
 
+    private Server forceServer;     // 强制指定请求的发送地址
+
     private final List<Block> blocks = new ArrayList<Block>();
 
     public Request(String command) {
@@ -35,6 +38,14 @@ public class Request {
         readTokens(tokens);
     }
 
+    public Server getForceServer() {
+        return forceServer;
+    }
+
+    public void setForceServer(Server forceServer) {
+        this.forceServer = forceServer;
+    }
+
     public void setCharset(String charset) {
         this.charset = charset;
     }
@@ -46,7 +57,7 @@ public class Request {
     private void readTokens(Object[] tokens) {
 
         // 一个命令至少有 command 和 key 两个部分，然后可能有后面其他参数
-        if (tokens.length < 2) {
+        if (isKeyRequired(tokens) && tokens.length < 2) {
             throw new SsdbException("Command '" + tokens[0] + "' has no parameters or not supported.");
         }
 
@@ -66,6 +77,14 @@ public class Request {
         }
     }
 
+    private boolean isKeyRequired(Object[] tokens) {
+        if (tokens.length == 0) {
+            return true;
+        }
+
+        return !(tokens[0].equals("dbsize") || tokens[0].equals("info"));
+    }
+
     public Block getHeader() {
         return header;
     }
@@ -75,7 +94,7 @@ public class Request {
     }
 
     public String getKey() {
-        return blocks.get(0).toString();    // 第一个参数一定是 key，用来决定其放在哪台服务器上
+        return blocks.isEmpty() ? null : blocks.get(0).toString();    // 第一个参数一定是 key，用来决定其放在哪台服务器上
     }
 
     @Override
