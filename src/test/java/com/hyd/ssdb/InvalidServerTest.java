@@ -2,9 +2,7 @@ package com.hyd.ssdb;
 
 import com.hyd.ssdb.conf.Cluster;
 import com.hyd.ssdb.conf.Server;
-import com.hyd.ssdb.conf.Sharding;
 import com.hyd.ssdb.sharding.ConsistentHashSharding;
-import org.junit.Test;
 
 import java.util.Arrays;
 
@@ -16,24 +14,20 @@ import java.util.Arrays;
  */
 public class InvalidServerTest {
 
-    @Test
-    public void testInvalidServer() throws Exception {
-        Sharding sharding = new ConsistentHashSharding(new Cluster(Arrays.asList(
-                new Server("192.168.1.180", 8888),
-                new Server("192.168.1.180", 8889),
-                new Server("192.168.1.180", 8890)
-        )));
+    public static void main(String[] args) throws Exception {
 
-        SsdbClient client = new SsdbClient(sharding);
-        client.set("name", "ssdb123");
-        System.out.println(client.get("name"));
-        System.out.println(client.get("name"));
-        System.out.println(client.get("name"));
-        System.out.println(client.get("name"));
-        System.out.println(client.get("name"));
-        System.out.println(client.get("name"));
-        System.out.println(client.get("name"));
+        // 创建一个主从集合的 Cluster
+        SsdbClient ssdbClient = new SsdbClient(new ConsistentHashSharding(Cluster.fromServers(Arrays.asList(
+                new Server("localhost", 18800),
+                new Server("localhost", 18801),
+                new Server("localhost", 18802)
+        ))));
 
-        client.close();
+        // 当 Cluster 中不是全部服务器挂掉时，个别服务器的挂掉和恢复可以自动识别。
+        ssdbClient.set("name", "hydrogen-ssdb");
+        while (true) {
+            System.out.println(ssdbClient.get("name"));
+            Thread.sleep(500);
+        }
     }
 }
