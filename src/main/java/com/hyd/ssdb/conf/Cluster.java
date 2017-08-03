@@ -31,9 +31,10 @@ public class Cluster {
 
     private String id = String.valueOf(hashCode());
 
+    private boolean invalid = false;
+
     private List<Server> servers;
 
-    ////////////////////////////////////////////////////////////////
     private List<Server> masters = new ArrayList<Server>();
 
     private List<Server> invalidServers = new ArrayList<Server>();
@@ -114,6 +115,14 @@ public class Cluster {
                 this.masters.add(server);
             }
         }
+    }
+
+    public boolean isInvalid() {
+        return invalid;
+    }
+
+    public void setInvalid(boolean invalid) {
+        this.invalid = invalid;
     }
 
     public String getId() {

@@ -17,6 +17,8 @@ public abstract class Sharding {
 
     protected List<Cluster> clusters = new ArrayList<Cluster>();
 
+    protected List<Cluster> invalidClusters = new ArrayList<Cluster>();
+
     public Sharding() {
     }
 
