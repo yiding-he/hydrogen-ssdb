@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -109,6 +110,10 @@ public class Cluster {
 
     public static Cluster fromServers(List<Server> servers) {
         return new Cluster(servers);
+    }
+
+    public static Cluster fromServers(Server... servers) {
+        return new Cluster(Arrays.asList(servers));
     }
 
     //////////////////////////////////////////////////////////////
@@ -271,6 +276,10 @@ public class Cluster {
 
         if (this.invalidServers.contains(server)) {
             this.invalidServers.remove(server);
+        }
+
+        if (this.invalid) {
+            this.invalid = false;
         }
     }
 

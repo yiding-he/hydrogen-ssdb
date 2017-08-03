@@ -11,6 +11,7 @@ import com.hyd.ssdb.util.Range;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -41,6 +42,10 @@ public class ConsistentHashSharding extends Sharding {
 
     public ConsistentHashSharding(List<Cluster> clusters) {
         super(clusters);
+    }
+
+    public ConsistentHashSharding(Cluster... clusters) {
+        super(Arrays.asList(clusters));
     }
 
     public SPOFStrategy getSpofStrategy() {
