@@ -3,6 +3,7 @@ package com.hyd.ssdb.conf;
 import com.hyd.ssdb.SsdbClientException;
 import com.hyd.ssdb.SsdbNoServerAvailableException;
 import com.hyd.ssdb.conn.ServerMonitorDaemon;
+import com.hyd.ssdb.util.Range;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,6 +41,10 @@ public class Cluster {
     private List<Server> invalidServers = new ArrayList<Server>();
 
     private int weight = DEFAULT_WEIGHT;
+
+    private Range<Integer> hashRange;   // 该 Cluster 原本的哈希段
+
+    private Cluster takenOverBy;        // 当 Cluster 不可用时，其哈希段会被另一个 Cluster 接管
 
     public Cluster(List<Server> servers, int weight) {
 
@@ -123,6 +128,22 @@ public class Cluster {
 
     public void setInvalid(boolean invalid) {
         this.invalid = invalid;
+    }
+
+    public Range<Integer> getHashRange() {
+        return hashRange;
+    }
+
+    public void setHashRange(Range<Integer> hashRange) {
+        this.hashRange = hashRange;
+    }
+
+    public Cluster getTakenOverBy() {
+        return takenOverBy;
+    }
+
+    public void setTakenOverBy(Cluster takenOverBy) {
+        this.takenOverBy = takenOverBy;
     }
 
     public String getId() {
@@ -250,6 +271,25 @@ public class Cluster {
 
         if (this.invalidServers.contains(server)) {
             this.invalidServers.remove(server);
+        }
+    }
+
+    /**
+     * 返回指定 hash 所属的 Cluster
+     *
+     * @param hash 要查询的 hash
+     *
+     * @return 如果当前 Cluster 的哈希段包含该值，则返回当前 Cluster 或托管的 Cluster，否则返回 null
+     */
+    public Cluster getHashHostingCluster(int hash) {
+        if (this.hashRange.contains(hash)) {
+            if (this.invalid) {
+                return this.takenOverBy.getHashHostingCluster(hash);
+            } else {
+                return this;
+            }
+        } else {
+            return null;
         }
     }
 

@@ -28,8 +28,6 @@ public class ConsistentHashSharding extends Sharding {
 
     private static final Logger LOG = LoggerFactory.getLogger(ConsistentHashSharding.class);
 
-    private Map<Cluster, Range<Integer>> rangeMap = new HashMap<Cluster, Range<Integer>>();
-
     /**
      * 单点故障处理策略，参考 {@link SPOFStrategy}
      */
@@ -55,8 +53,9 @@ public class ConsistentHashSharding extends Sharding {
 
     public Map<String, Range<Integer>> getRangeMap() {
         HashMap<String, Range<Integer>> map = new HashMap<String, Range<Integer>>();
-        for (Map.Entry<Cluster, Range<Integer>> entry : rangeMap.entrySet()) {
-            map.put(entry.getKey().getId(), entry.getValue().duplicate());
+        for (Cluster cluster : clusters) {
+            map.put(cluster.getId() + "(" + !cluster.isInvalid() + ")",
+                    cluster.getHashRange().duplicate());
         }
         return map;
     }
@@ -100,45 +99,20 @@ public class ConsistentHashSharding extends Sharding {
 
     // 将 toSplitCluster 的右边部分划分给 newCluster
     private void splitRangeToRight(Cluster newCluster, Cluster toSplitCluster) {
-        Range<Integer> originalRange = rangeMap.get(toSplitCluster);
+        Range<Integer> originalRange = toSplitCluster.getHashRange();
 
         int split = originalRange.getMin() +
                 (originalRange.getMax() - originalRange.getMin()) * toSplitCluster.getWeight()
                         / (toSplitCluster.getWeight() + newCluster.getWeight());
 
-        // 更新 toSplitCluster 范围
-        originalRange.setMax(split);
-
-        // 更新 newCluster 范围
-        rangeMap.put(newCluster, new Range<Integer>(split + 1, originalRange.getMax()));
-    }
-
-    // 将 toSplitCluster 的左边部分划分给 newCluster
-    private void splitRangeToLeft(Cluster newCluster, Cluster toSplitCluster) {
-        Range<Integer> originalRange = rangeMap.get(toSplitCluster);
-
-        int split = originalRange.getMin() +
-                (originalRange.getMax() - originalRange.getMin()) * newCluster.getWeight()
-                        / (toSplitCluster.getWeight() + newCluster.getWeight());
-
-        // 更新 toSplitCluster 范围
-        originalRange.setMin(split + 1);
-
-        // 更新 newCluster 范围
-        rangeMap.put(newCluster, new Range<Integer>(originalRange.getMin(), split));
+        // 更新范围
+        setClusterRange(toSplitCluster, originalRange.getMin(), split);
+        setClusterRange(newCluster, split + 1, originalRange.getMax());
     }
 
     public synchronized void clusterRestored(Cluster restoredCluster) {
         restoredCluster.setInvalid(false);
-
-        if (getAvailableClusterCount() == 1) {
-            setClusterRange(restoredCluster, Integer.MIN_VALUE, Integer.MAX_VALUE);
-            return;
-        }
-
-        if (clusters.indexOf(restoredCluster) == 0) {
-
-        }
+        restoredCluster.setTakenOverBy(null);
     }
 
     @Override
@@ -202,7 +176,7 @@ public class ConsistentHashSharding extends Sharding {
 
     private void setClusterRange(Cluster cluster, int minValue, int maxValue) {
         Range<Integer> range = new Range<Integer>(minValue, maxValue);
-        rangeMap.put(cluster, range);
+        cluster.setHashRange(range);
     }
 
     @Override
@@ -213,7 +187,6 @@ public class ConsistentHashSharding extends Sharding {
 
         if (this.spofStrategy == SPOFStrategy.AutoExpandStrategy) {
             invalidCluster.setInvalid(true);
-            rangeMap.remove(invalidCluster);
             autoExpand(invalidCluster);
             return true;
         } else {
@@ -229,7 +202,8 @@ public class ConsistentHashSharding extends Sharding {
      * @param invalidCluster 已下线的 Cluster
      */
     private synchronized void autoExpand(Cluster invalidCluster) {
-        if (!rangeMap.containsKey(invalidCluster)) {
+
+        if (!clusters.contains(invalidCluster)) {
             return;
         }
 
@@ -237,21 +211,23 @@ public class ConsistentHashSharding extends Sharding {
             throw new SsdbNoClusterAvailableException("No cluster exists");
         }
 
-        int minHash = rangeMap.get(invalidCluster).getMin();
-        int maxHash = rangeMap.get(invalidCluster).getMax();
+        int minHash = invalidCluster.getHashRange().getMin();
+        int maxHash = invalidCluster.getHashRange().getMax();
 
         // 如果是第一个 Cluster，则将后面的向前扩展；否则令前面的向后扩展
         boolean isFirstCluster = minHash == Integer.MIN_VALUE;
 
         if (isFirstCluster) {
             Cluster secondCluster = clusters.get(1);
-            rangeMap.get(secondCluster).setMin(Integer.MIN_VALUE);
+            secondCluster.getHashRange().setMin(Integer.MIN_VALUE);
+            invalidCluster.setTakenOverBy(secondCluster);
             LOG.debug("Expand cluster " + secondCluster.getId() + " left to ring start.");
             return;
         } else {
             for (Cluster cluster : clusters) {
-                if (rangeMap.get(cluster).getMax() + 1 == minHash) {   // 找到上一个 cluster
-                    rangeMap.get(cluster).setMax(maxHash);
+                if (cluster.getHashRange().getMax() + 1 == minHash) {   // 找到上一个 cluster
+                    cluster.getHashRange().setMax(maxHash);
+                    invalidCluster.setTakenOverBy(cluster);
                     LOG.debug("Expand cluster " + cluster.getId() + " right to " + maxHash);
                     return;
                 }
@@ -290,12 +266,14 @@ public class ConsistentHashSharding extends Sharding {
         int hash = MD5.md5Hash(key);
 
         for (Cluster cluster : clusters) {
-            if (rangeMap.containsKey(cluster) && rangeMap.get(cluster).contains(hash)) {
-                return cluster;
+            Cluster hostingCluster = cluster.getHashHostingCluster(hash);
+            if (hostingCluster != null) {
+                return hostingCluster;
             }
         }
 
-        // 因为 clusters 列表一定会包含 Integer 的所有值
+        // 理论上 clusters 列表一定会包含 Integer 的所有值，
+        // 所以执行到这里表示所有的 Cluster 都不可用
         throw new SsdbException("Unable to choose a cluster for key '" + key + "'");
     }
 }
