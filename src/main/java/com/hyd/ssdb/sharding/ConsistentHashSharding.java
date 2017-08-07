@@ -265,7 +265,7 @@ public class ConsistentHashSharding extends Sharding {
     public Cluster getClusterByKey(String key) {
 
         if (noClusterAvailable()) {
-            throw new SsdbNoClusterAvailableException("ALL CLUSTERS DOWN");
+            throw new SsdbNoClusterAvailableException("NO CLUSTER AVAILABLE");
         }
 
         int hash = MD5.md5Hash(key);
