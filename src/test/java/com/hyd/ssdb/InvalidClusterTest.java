@@ -21,12 +21,15 @@ public class InvalidClusterTest {
                 Cluster.fromSingleServer("heyiding.com", 18881)
         ));
 
+        SsdbClient ssdbClient2 = new SsdbClient("heyiding.com", 18880);
+
         ssdbClient.del("name");  // init
 
         while (true) {
             try {
                 Thread.sleep(500);
                 System.out.println(readFromCache(ssdbClient));
+                System.out.println(readFromCache(ssdbClient2));
             } catch (InterruptedException e) {
                 e.printStackTrace();
                 break;

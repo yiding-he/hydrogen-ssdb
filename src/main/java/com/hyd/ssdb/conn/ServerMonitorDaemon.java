@@ -30,7 +30,7 @@ public class ServerMonitorDaemon {
 
     private static int interval = DEFAULT_INTERVAL;
 
-    private static final Map<Server, Cluster> invalidServers = new ConcurrentHashMap<Server, Cluster>();
+    private static final Map<Server, List<Cluster>> invalidServers = new ConcurrentHashMap<Server, List<Cluster>>();
 
     private static final Thread daemonThread;
 
@@ -82,8 +82,15 @@ public class ServerMonitorDaemon {
      *                1. 当 server 恢复运作时，将调用 cluster 的 {@link Cluster#markValid(Server)} 方法；
      *                2. 当 server 被从 cluster 中移除时，不再进行监视。
      */
-    public static void addInvalidServer(Server server, Cluster cluster) {
-        invalidServers.put(server, cluster);
+    public synchronized static void addInvalidServer(Server server, Cluster cluster) {
+        if (!invalidServers.containsKey(server)) {
+            invalidServers.put(server, new ArrayList<Cluster>());
+        }
+
+        List<Cluster> clusters = invalidServers.get(server);
+        if (!clusters.contains(cluster)) {
+            clusters.add(cluster);
+        }
     }
 
     /**
@@ -134,14 +141,24 @@ public class ServerMonitorDaemon {
 
         private void runSafe() throws Exception {
 
-            // 无需监视的服务器列表
+            // 无需监视的服务器列表（在当前线程中删除）
             final Set<Server> noMonitoringServers = new HashSet<Server>();
 
             for (final Server server : invalidServers.keySet()) {
-                final Cluster cluster = invalidServers.get(server);
 
-                // Server 已经不存在于 Cluster 中，无需再监视了
-                if (!cluster.containsServer(server)) {
+                final List<Cluster> clusters = invalidServers.get(server);
+
+                // 删除不再包含该 Server 的 Cluster
+                Iterator<Cluster> itClusters = clusters.iterator();
+                while (itClusters.hasNext()) {
+                    Cluster cluster = itClusters.next();
+                    if (!cluster.containsServer(server)) {
+                        itClusters.remove();
+                    }
+                }
+
+                // 所有 Cluster 都没有包含该 Server，无需再监视了
+                if (clusters.isEmpty()) {
                     noMonitoringServers.add(server);
                     continue;
                 }
@@ -159,7 +176,9 @@ public class ServerMonitorDaemon {
                     public void run() {
                         try {
                             if (isServerAvailable(server)) {
-                                cluster.markValid(server);
+                                for (Cluster cluster : clusters) {
+                                    cluster.markValid(server);
+                                }
                                 invalidServers.remove(server);
                             }
                         } catch (Exception e) {
