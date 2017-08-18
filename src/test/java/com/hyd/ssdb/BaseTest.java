@@ -16,7 +16,7 @@ public class BaseTest {
     @Before
     public void init() {
         String host = System.getProperty("h", "127.0.0.1");
-        int port = Integer.parseInt(System.getProperty("p", "8888"));
+        int port = Integer.parseInt(System.getProperty("p", "8881"));
         this.ssdbClient = new SsdbClient(host, port);
     }
 

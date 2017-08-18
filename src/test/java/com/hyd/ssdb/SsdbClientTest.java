@@ -421,6 +421,22 @@ public class SsdbClientTest extends BaseTest {
     }
 
     @Test
+    public void testHlist() throws Exception {
+        ssdbClient.hset("h1", "name", "name_of_h1");
+        ssdbClient.hset("h2", "name", "name_of_h2");
+        List<String> keys = ssdbClient.hlist("h0", "h9", -1);
+        assertEquals(Arrays.asList("h1", "h2"), keys);
+    }
+
+    @Test
+    public void testHrlist() throws Exception {
+        ssdbClient.hset("h1", "name", "name_of_h1");
+        ssdbClient.hset("h2", "name", "name_of_h2");
+        List<String> keys = ssdbClient.hrlist("h9", "h0", -1);
+        assertEquals(Arrays.asList("h2", "h1"), keys);
+    }
+
+    @Test
     public void testPopAllFront() throws Exception {
         ssdbClient.qpushFront("q1", "1");
         ssdbClient.qpushFront("q1", "2");

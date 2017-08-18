@@ -344,12 +344,12 @@ public class SsdbClient extends AbstractClient {
         return sendRequest("hsize", key).getIntResult();
     }
 
-    public List<KeyValue> hlist(String key, String startExclude, String endInclude, int limit) {
-        return sendRequest("hlist", key, startExclude, endInclude, limit).getKeyValues();
+    public List<String> hlist(String startExclude, String endInclude, int limit) {
+        return sendRequest("hlist", startExclude, endInclude, limit).getBlocks();
     }
 
-    public List<KeyValue> hrlist(String key, String startExclude, String endInclude, int limit) {
-        return sendRequest("hrlist", key, startExclude, endInclude, limit).getKeyValues();
+    public List<String> hrlist(String startExclude, String endInclude, int limit) {
+        return sendRequest("hrlist", startExclude, endInclude, limit).getBlocks();
     }
 
     public List<String> hkeys(String key, String startExclude, String endInclude, int limit) {
