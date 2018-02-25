@@ -1,7 +1,12 @@
 package com.hyd.ssdb;
 
+import com.hyd.ssdb.conf.Cluster;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
+
+import java.util.ArrayList;
 
 /**
  * (description)
@@ -11,18 +16,34 @@ import org.junit.Before;
  */
 public class BaseTest {
 
-    protected SsdbClient ssdbClient;
+    protected static SsdbClient ssdbClient;
 
-    @Before
-    public void init() {
-        String host = System.getProperty("h", "127.0.0.1");
-        int port = Integer.parseInt(System.getProperty("p", "8881"));
-        this.ssdbClient = new SsdbClient(host, port);
+    @BeforeClass
+    public static void init() {
+        String hostStr = System.getProperty("h", "127.0.0.1");
+        String portStr = System.getProperty("p", "8881");
+
+        if (hostStr.contains(",") && portStr.contains(",")) {
+            String[] hostArr = hostStr.split(",");
+            String[] portArr = portStr.split(",");
+
+            ArrayList<Cluster> clusters = new ArrayList<Cluster>();
+            for (int i = 0; i < hostArr.length; i++) {
+                String host = hostArr[i];
+                int port = Integer.parseInt(portArr[i]);
+                clusters.add(Cluster.fromSingleServer(host, port));
+            }
+
+            ssdbClient = SsdbClient.fromClusters(clusters);
+        } else {
+            ssdbClient = new SsdbClient(hostStr, Integer.parseInt(portStr));
+        }
+
     }
 
-    @After
-    public void finish() {
-        this.ssdbClient.close();
+    @AfterClass
+    public static void finish() {
+        ssdbClient.close();
     }
 
 }

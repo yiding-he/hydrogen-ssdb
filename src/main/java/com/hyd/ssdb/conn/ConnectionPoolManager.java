@@ -12,6 +12,8 @@ import com.hyd.ssdb.protocol.WriteRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -40,6 +42,22 @@ public class ConnectionPoolManager {
 
     public Sharding getSharding() {
         return sharding;
+    }
+
+    public List<PoolAndConnection> getAllConnections(Request request) {
+        boolean write = request instanceof WriteRequest;
+        List<PoolAndConnection> result = new ArrayList<PoolAndConnection>();
+
+        try {
+            for (Cluster cluster : this.sharding.getClusters()) {
+                ConnectionPool pool = pickServer(cluster, write);
+                result.add(new PoolAndConnection(pool, pool.borrowObject()));
+            }
+        } catch (Exception e) {
+            throw new SsdbClientException(e);
+        }
+
+        return result;
     }
 
     /**

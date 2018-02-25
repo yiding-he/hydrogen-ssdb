@@ -6,7 +6,7 @@
 
     <groupId>com.hyd</groupId>
     <artifactId>hydrogen-ssdb</artifactId>
-    <version>1.0.1</version>
+    <version>1.1.0</version>
 
     <properties>
         <maven.compiler.source>1.6</maven.compiler.source>

@@ -139,6 +139,27 @@ public abstract class AbstractClient {
         return response;
     }
 
+    protected List<Response> sendRequestToAll(Object... tokens) {
+        return sendRequestToAll(new Request(tokens));
+    }
+
+    protected List<Response> sendRequestToAll(Request request) {
+        List<PoolAndConnection> pacList = connectionPoolManager.getAllConnections(request);
+        List<Response> responseList = new ArrayList<Response>();
+
+        for (PoolAndConnection pac : pacList) {
+            Connection connection = pac.getConnection();
+
+            try {
+                responseList.add(sendRequest(request, connection));
+            } finally {
+                pac.getConnectionPool().returnObject(connection);
+            }
+        }
+
+        return responseList;
+    }
+
     // 发送一个命令，但不会把连接返回给连接池（内部使用）
     private Response sendRequest(Request request, Connection connection) {
         try {
@@ -164,6 +185,22 @@ public abstract class AbstractClient {
             e.setServerErrorCode(header);
             throw e;
         }
+    }
+
+    /**
+     * 将 token 插入到 parameters 的第一位，生成一个新的数组
+     *
+     * @param token         要插入的内容
+     * @param parameterList 参数
+     *
+     * @return 新生成的数组
+     */
+    protected String[] prependCommand(String token, List<String> parameterList) {
+        String[] parameters = parameterList.toArray(new String[parameterList.size()]);
+        String[] command = new String[parameters.length + 1];
+        command[0] = token;
+        System.arraycopy(parameters, 0, command, 1, parameters.length);
+        return command;
     }
 
     /**
@@ -318,5 +355,21 @@ public abstract class AbstractClient {
         }
 
         return new ArrayList<List<KeyValue>>(groups.values());
+    }
+
+    protected List<String> combineBlocks(List<Response> responseList) {
+        List<String> result = new ArrayList<String>();
+        for (Response response : responseList) {
+            result.addAll(response.getBlocks());
+        }
+        return result;
+    }
+
+    protected List<KeyValue> combineKeyValues(List<Response> responseList) {
+        List<KeyValue> result = new ArrayList<KeyValue>();
+        for (Response response : responseList) {
+            result.addAll(response.getKeyValues());
+        }
+        return result;
     }
 }

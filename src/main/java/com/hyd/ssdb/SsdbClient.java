@@ -8,9 +8,7 @@ import com.hyd.ssdb.protocol.Response;
 import com.hyd.ssdb.sharding.ConsistentHashSharding;
 import com.hyd.ssdb.util.*;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * 包含连接池的客户端类，对于一个 SSDB 服务器只需要创建一个 SsdbClient 客户端。
@@ -244,7 +242,7 @@ public class SsdbClient extends AbstractClient {
     }
 
     public List<String> keys(String startExclude, String endInclude, int limit) {
-        return sendRequest("keys", startExclude, endInclude, limit).getBlocks();
+        return combineBlocks(sendRequestToAll("keys", startExclude, endInclude, limit));
     }
 
     public List<String> rkeys(String startExclude, String endInclude, int limit) {
@@ -252,7 +250,7 @@ public class SsdbClient extends AbstractClient {
     }
 
     public List<KeyValue> scan(String startExclude, String endInclude, int limit) {
-        return sendRequest("scan", startExclude, endInclude, limit).getKeyValues();
+        return combineKeyValues(sendRequestToAll("scan", startExclude, endInclude, limit));
     }
 
     public void scan(String prefix, int batchSize, Processor<KeyValue> keyConsumer) {
@@ -272,6 +270,37 @@ public class SsdbClient extends AbstractClient {
 
     public List<KeyValue> rscan(String startExclude, String endInclude, int limit) {
         return sendRequest("rscan", startExclude, endInclude, limit).getKeyValues();
+    }
+
+    public List<String> multiGet(String... keys) {
+
+        if (keys == null || keys.length == 0) {
+            return Collections.emptyList();
+        }
+
+        return multiGet(Arrays.asList(keys));
+    }
+
+    public List<String> multiGet(List<String> keys) {
+
+        if (keys == null || keys.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<String> result;
+
+        if (getSharding().getClusters().size() == 1) {
+            String[] command = prependCommand("multi_get", keys);
+            result = sendRequest((Object[]) command).getBlocks();
+
+        } else {
+            result = new ArrayList<String>();
+            for (String key : keys) {
+                result.add(get(key));
+            }
+        }
+
+        return result;
     }
 
     public void multiSet(String... keyValues) {
@@ -345,11 +374,11 @@ public class SsdbClient extends AbstractClient {
     }
 
     public List<String> hlist(String startExclude, String endInclude, int limit) {
-        return sendRequest("hlist", startExclude, endInclude, limit).getBlocks();
+        return combineBlocks(sendRequestToAll("hlist", startExclude, endInclude, limit));
     }
 
     public List<String> hrlist(String startExclude, String endInclude, int limit) {
-        return sendRequest("hrlist", startExclude, endInclude, limit).getBlocks();
+        return combineBlocks(sendRequestToAll("hrlist", startExclude, endInclude, limit));
     }
 
     public List<String> hkeys(String key, String startExclude, String endInclude, int limit) {

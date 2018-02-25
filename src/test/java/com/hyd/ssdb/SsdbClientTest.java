@@ -28,7 +28,7 @@ public class SsdbClientTest extends BaseTest {
 
     @Test
     public void testSendRequest() throws Exception {
-        Response response = this.ssdbClient.sendRequest(new Request("get name"));
+        Response response = ssdbClient.sendRequest(new Request("get name"));
         System.out.println(response.getHead());
         System.out.println(response.getBlocks());
     }
