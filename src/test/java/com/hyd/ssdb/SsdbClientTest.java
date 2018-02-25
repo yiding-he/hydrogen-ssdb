@@ -34,6 +34,13 @@ public class SsdbClientTest extends BaseTest {
     }
 
     @Test
+    public void testMultiGet() {
+        ssdbClient.multiSet("key1", "value1", "key2", "value2", "key3", "value3");
+        List<String> values = ssdbClient.multiGet("key1", "key2", "key3");
+        assertEquals(Arrays.asList("value1", "value2", "value3"), values);
+    }
+
+    @Test
     public void testDbsize() throws Exception {
         Server server = ssdbClient.getSharding().getClusters().get(0).getServers().get(0);
         System.out.println("dbsize of " + server + ": " + ssdbClient.dbsize(server));
