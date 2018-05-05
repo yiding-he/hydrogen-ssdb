@@ -92,7 +92,7 @@ List<Server> servers = Arrays.asList(
         new Server("192.168.1.180", 8889, null, false)  // 从服务器
 );
 
-SsdbClient client = new SsdbClient(Sharding.fromServerList(servers));
+SsdbClient client = SsdbClient.fromSingleCluster(servers);
 client.set("name", "hydrogen-ssdb");    // 写入请求一定会发送给主服务器
 System.out.println(client.get("name")); // 读取请求会随机发送给任意一台服务器
 ```
