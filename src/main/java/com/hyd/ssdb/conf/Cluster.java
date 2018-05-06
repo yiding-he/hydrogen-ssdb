@@ -320,4 +320,14 @@ public class Cluster {
     public synchronized boolean containsServer(Server server) {
         return this.servers.contains(server) || this.invalidServers.contains(server);
     }
+
+    public Server findServer(String host, int port) {
+        for (Server server : servers) {
+            if (server.getHost().equals(host) && server.getPort() == port) {
+                return server;
+            }
+        }
+
+        return null;
+    }
 }

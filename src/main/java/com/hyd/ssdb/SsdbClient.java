@@ -75,7 +75,8 @@ public class SsdbClient extends AbstractClient {
     }
 
     public static SsdbClient fromSingleCluster(List<Server> servers) {
-        return new SsdbClient(servers);
+        Cluster cluster = Cluster.fromServers(servers);
+        return new SsdbClient(new ConsistentHashSharding(cluster));
     }
 
     public static SsdbClient fromClusters(List<Cluster> clusters) {

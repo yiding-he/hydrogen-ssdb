@@ -183,10 +183,11 @@ public class ConnectionPoolManager {
     }
 
     public void reportInvalidConnection(String host, int port) {
-        Server toInvalidate = new Server(host, port);
+
         for (Cluster cluster : sharding.getClusters()) {
-            if (cluster.containsServer(toInvalidate)) {
-                cluster.markInvalid(toInvalidate);
+            Server server = cluster.findServer(host, port);
+            if (server != null) {
+                cluster.markInvalid(server);
             }
         }
     }

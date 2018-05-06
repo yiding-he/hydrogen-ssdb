@@ -30,6 +30,12 @@ public class Server {
         this.port = port;
     }
 
+    public Server(String host, int port, boolean master) {
+        this.host = host;
+        this.port = port;
+        this.master = master;
+    }
+
     public Server(String host, int port, String pass) {
         this.host = host;
         this.port = port;

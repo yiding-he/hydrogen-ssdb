@@ -113,6 +113,11 @@ public abstract class AbstractClient {
             try {
                 connectionPool = poolAndConnection.getConnectionPool();
                 connection = poolAndConnection.getConnection();
+
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("choose server " + connection.getHost() + ":" + connection.getPort());
+                }
+
                 response = sendRequest(request, connection);
                 needResend = false;
             } catch (SsdbNoServerAvailableException e) {
