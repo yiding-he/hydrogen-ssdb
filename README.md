@@ -29,8 +29,7 @@ hydrogen-ssdb 将负载均衡抽象为`Sharding`类，该类负责决定一个�
 hydrogen-ssdb 缺省实现了基于一致性哈希环的负载均衡方式。如果这种方式不适合您的实际情况，您可以自己实现`Sharding`的子类，然后通过`SsdbClient`的构造方法传入。下面是一个如何使用自定义`Sharding`的例子，假设你已经实现了自定义的`MySharding`类：
 
 ```java
-Cluster cluster = new Cluster(server);
-MySharding mySharding = new MySharding(cluster);  // 自定义 Sharding
+MySharding mySharding = ...  // 自定义 Sharding
 SsdbClient client = new SsdbClient(mySharding);
 ```
 
@@ -48,7 +47,7 @@ SsdbClient client = new SsdbClient(mySharding);
 
 #### 【对单点故障的处理】
 
-在负载均衡当中，每个节点都负责整个一致性哈希环中的一部分（称为哈希段）。当负载均衡当中出现单点故障时，故障节点对应的哈希段将无法执行存取操作，因此有两种处理方式：
+在负载均衡当中，每个节点都负责整个一致性哈希环中的一部分（称为哈希段）。当负载均衡当中出现单点故障时，故障节点对应的哈希段将无法执行存取操作，于是有两种处理方式：
 
 1. 故障节点前面的节点自动接管该哈希段。这种方式适用于将 SSDB 用于缓存，因为缓存丢失是可以重新填充的；
 2. 保留哈希段的故障状态，直到故障节点恢复。这种方式适用于将 SSDB 用于数据库，这样能严格保证一个 key 会保存在对应的节点中。
@@ -63,6 +62,8 @@ sharding.setSpofStrategy(SPOFStrategy.PreserveKeySpaceStrategy);
 #### 【如何添加 Cluster】
 
 对于一致性哈希环，每一个 Cluster 的哈希段都是固定的，所以每添加一个新的 Cluster，都只会给当前的其中 1 个 Cluster 减负，而不是给所有的 Cluster 减负。例如当前有 A、B、C 三个 Cluster，那么当添加一个 D 到 A 和 B 之间，形成 “A-D-B-C” 时，它只会分担 A 的一部分哈希段，B 和 C 的哈希段没有改变，也就是说 B 和 C 的负载没有变化。
+
+`ConsistentHashSharding` 使用 key 的 MD5 签名的前四个字节作为 hash 值，以尽可能让所有的 key 均匀分布。
 
 由此可知，在添加 Cluster 之前，你需要明确的了解每个 Cluster 当前的负载情况，找到负载最重的 Cluster，将新的 Cluster 加在它后面。
 
@@ -89,8 +90,8 @@ client.close();    // 应用结束时需要调用 close() 方法，也可以配�
 #### 配置主从服务器
 ```java
 List<Server> servers = Arrays.asList(
-        new Server("192.168.1.180", 8888, null, true),  // 主服务器
-        new Server("192.168.1.180", 8889, null, false)  // 从服务器
+        new Server("192.168.1.180", 8888, true),  // 主服务器
+        new Server("192.168.1.180", 8889, false)  // 从服务器
 );
 
 SsdbClient client = SsdbClient.fromSingleCluster(servers);
