@@ -291,8 +291,12 @@ public class SsdbClient extends AbstractClient {
         List<String> result;
 
         if (getSharding().getClusters().size() == 1) {
+            result = new ArrayList<String>();
             String[] command = prependCommand("multi_get", keys);
-            result = sendRequest((Object[]) command).getBlocks();
+            List<KeyValue> keyValues = sendRequest((Object[]) command).getKeyValues();
+            for (KeyValue keyValue : keyValues) {
+                result.add(keyValue.getValue());
+            }
 
         } else {
             result = new ArrayList<String>();

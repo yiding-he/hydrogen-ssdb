@@ -9,7 +9,8 @@
     </appender>
     <!--////////////////////////////////////////////////////////////-->
     <!-- 配置全局缺省的输出渠道 -->
-    <root level="DEBUG">
+    <root level="INFO">
         <appender-ref ref="STDOUT"/>
     </root>
+    <logger name="com.hyd.ssdb.conn.ConnectionFactory" level="DEBUG"/>
 </configuration>

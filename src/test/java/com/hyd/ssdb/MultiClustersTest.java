@@ -17,12 +17,21 @@ public class MultiClustersTest {
 
     public static void main(String[] args) {
         Sharding sharding = new ConsistentHashSharding(Arrays.asList(
-                new Cluster(new Server("192.168.1.180", 8888), 100),
-                new Cluster(new Server("192.168.1.180", 8889), 100)
+                Cluster.fromServers(
+                        new Server("localhost", 8011, true),
+                        new Server("localhost", 8012, false),
+                        new Server("localhost", 8013, false)
+                ),
+                Cluster.fromSingleServer("localhost", 8021),
+                Cluster.fromServers(
+                        new Server("localhost", 8031, true),
+                        new Server("localhost", 8032, false),
+                        new Server("localhost", 8033, false)
+                )
         ));
 
         SsdbClient ssdbClient = new SsdbClient(sharding);
-        for (int i = 100; i < 200; i++) {
+        for (int i = 100; i < 2000; i++) {
             String key = "key" + i;
             String value = "value" + i;
             ssdbClient.set(key, value);
