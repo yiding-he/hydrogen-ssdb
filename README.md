@@ -3,6 +3,7 @@ Java 编写的 SSDB 客户端
 
 ## 更新
 
+* 2019-03-27: 版本号更新到 `V1.1.2` 修复了运行过程中添加第二个 Cluster 失败的问题，以及自动扩展哈希段的问题
 * 2019-02-06: 版本号更新到 `V1.1.1` 修复了 `multiGet()` 方法在多服务器环境下返回错误结果的问题。
 * 2018-05-06: 修复了从节点恢复时没有被认作是从节点的问题。
 * 2018-02-25: 版本号更新到 `V1.1.0`，添加了 `multiGet()` 方法，修复了若干方法在多服务器负载均衡上的 BUG。
@@ -69,6 +70,8 @@ sharding.setSpofStrategy(SPOFStrategy.PreserveKeySpaceStrategy);
 由此可知，在添加 Cluster 之前，你需要明确的了解每个 Cluster 当前的负载情况，找到负载最重的 Cluster，将新的 Cluster 加在它后面。
 
 所以，`ConsistentHashSharding` 的 `addCluster()` 方法有两个参数，第一个是要添加的 Cluster，第二个是需要被分担负载的 Cluster。
+
+新加入的 Cluster 和原有的 Cluster 将根据双方的权重值重新分配原来的哈希段。假设两个 Cluster 的权重相同，则平分原来的哈希段。这个过程和其他的 Cluster 权重无关。
 
 ## 项目依赖
 

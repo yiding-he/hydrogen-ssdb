@@ -54,4 +54,12 @@ public class Range<T extends Number> {
     public Range<T> duplicate() {
         return new Range<T>(min, max);
     }
+
+    @Override
+    public String toString() {
+        return "Range{" +
+            "min=" + min +
+            ", max=" + max +
+            '}';
+    }
 }

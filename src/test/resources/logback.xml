@@ -12,5 +12,5 @@
     <root level="INFO">
         <appender-ref ref="STDOUT"/>
     </root>
-    <logger name="com.hyd.ssdb.conn.ConnectionFactory" level="DEBUG"/>
+    <logger name="com.hyd.ssdb" level="DEBUG"/>
 </configuration>

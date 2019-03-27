@@ -1,7 +1,6 @@
 package com.hyd.ssdb.conf;
 
 import com.hyd.ssdb.SsdbClientException;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -15,12 +14,7 @@ import java.util.List;
  */
 public abstract class Sharding {
 
-    protected List<Cluster> clusters = new ArrayList<Cluster>();
-
-    protected List<Cluster> invalidClusters = new ArrayList<Cluster>();
-
-    public Sharding() {
-    }
+    protected List<Cluster> clusters;
 
     /**
      * 构造方法
@@ -67,6 +61,8 @@ public abstract class Sharding {
 
     /**
      * 当某个 Cluster 下线（即 Cluster 中的所有的服务器都不可用）时的处理（交给子类实现）
+     * ServerMonitorDaemon 会检查下线的服务器，发现有服务器恢复运作的话，会修改对应的
+     * Cluster 状态为上线
      *
      * @param invalidCluster 下线的 Cluster
      *
