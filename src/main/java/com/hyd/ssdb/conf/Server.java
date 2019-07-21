@@ -105,8 +105,7 @@ public class Server {
         }
     }
 
-
-    private GenericObjectPoolConfig createDefaultPoolConfig() {
+    public static GenericObjectPoolConfig createDefaultPoolConfig() {
         GenericObjectPoolConfig config = new GenericObjectPoolConfig();
         config.setMaxIdle(1);
         return config;
