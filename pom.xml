@@ -6,11 +6,11 @@
 
     <groupId>com.hyd</groupId>
     <artifactId>hydrogen-ssdb</artifactId>
-    <version>1.1.2</version>
+    <version>1.2.0</version>
 
     <properties>
-        <maven.compiler.source>1.6</maven.compiler.source>
-        <maven.compiler.target>1.6</maven.compiler.target>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
@@ -20,7 +20,7 @@
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-pool2</artifactId>
-            <version>2.3</version>
+            <version>2.7.0</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -38,19 +38,13 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.11</version>
+            <version>4.12</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-context</artifactId>
-            <version>4.1.6.RELEASE</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>commons-lang</groupId>
-            <artifactId>commons-lang</artifactId>
-            <version>2.6</version>
+            <version>5.1.8.RELEASE</version>
             <scope>provided</scope>
         </dependency>
 
@@ -58,13 +52,13 @@
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
-            <version>2.4</version>
+            <version>2.6</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>com.esotericsoftware</groupId>
             <artifactId>kryo</artifactId>
-            <version>4.0.0</version>
+            <version>4.0.2</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -85,17 +79,4 @@
             </plugin>
         </plugins>
     </build>
-
-    <distributionManagement>
-        <repository>
-            <id>heyiding.com</id>
-            <name>public</name>
-            <url>https://heyiding.com/nexus/content/repositories/releases/</url>
-        </repository>
-        <snapshotRepository>
-            <id>heyiding.com</id>
-            <name>Snapshots</name>
-            <url>https://heyiding.com/nexus/content/repositories/snapshots/</url>
-        </snapshotRepository>
-    </distributionManagement>
 </project>

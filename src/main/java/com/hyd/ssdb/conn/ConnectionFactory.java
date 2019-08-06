@@ -34,7 +34,7 @@ public class ConnectionFactory implements PooledObjectFactory<Connection> {
 
     public PooledObject<Connection> makeObject() throws Exception {
         LOG.debug("Creating connection with " + server);
-        return new DefaultPooledObject<Connection>(new Connection(server));
+        return new DefaultPooledObject<>(new Connection(server));
     }
 
     public void destroyObject(PooledObject<Connection> p) throws Exception {

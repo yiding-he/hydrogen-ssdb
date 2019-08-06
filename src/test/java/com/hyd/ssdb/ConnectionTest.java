@@ -15,7 +15,7 @@ public class ConnectionTest {
 
     @Test
     public void testReceive2() throws Exception {
-        Connection connection = new Connection("localhost", 18801, 1000, 8192);
+        Connection connection = new Connection("localhost", 18801, null, 1000, 8192);
 
         connection.send(new Request("set name hydrogen-ssdb").toBytes());
         Response response1 = connection.receivePacket();
