@@ -1,20 +1,12 @@
 package com.hyd.ssdb.conn;
 
-import com.hyd.ssdb.SsdbException;
-import com.hyd.ssdb.SsdbSocketFailedException;
+import com.hyd.ssdb.*;
 import com.hyd.ssdb.conf.Server;
-import com.hyd.ssdb.protocol.Block;
-import com.hyd.ssdb.protocol.Response;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import com.hyd.ssdb.protocol.*;
+import java.io.*;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * 对 Socket 的包装。一旦发送或读取内容失败，Connection
@@ -26,6 +18,8 @@ public class Connection {
 
     private Socket socket;      // 网络连接套接字
 
+    private String pass;        // 连接成功后发送认证口令
+
     private boolean available;  // 是否已经不再可用
 
     private int buffer;         // 读取数据时缓存区的长度
@@ -33,19 +27,34 @@ public class Connection {
     private Map<String, Object> properties = new HashMap<String, Object>();   // 其他属性
 
     public Connection(Server server) {
-        this(server.getHost(), server.getPort(), server.getSocketConfig().getSoTimeout(), server.getSocketConfig().getSoBufferSize());
+        this(server.getHost(), server.getPort(), server.getPass(),
+            server.getSocketConfig().getSoTimeout(), server.getSocketConfig().getSoBufferSize());
     }
 
-    public Connection(String host, int port, int soTimeout, int soBuffer) {
+    public Connection(String host, int port, String pass, int soTimeout, int soBuffer) {
         try {
             this.socket = new Socket(host, port);
             this.socket.setSoTimeout(soTimeout);
+            this.pass = pass;
             this.buffer = soBuffer;
             this.available = true;
             this.properties.put("host", host);
             this.properties.put("port", port);
+
+            if (this.pass != null) {
+                auth();
+            }
         } catch (IOException e) {
             throw new SsdbSocketFailedException(e);
+        }
+    }
+
+    private void auth() {
+        send(new Request("auth", this.pass).toBytes());
+        Response response = receivePacket();
+        String header = response.getHead().toString();
+        if (!header.equals("ok")) {
+            throw new SsdbAuthFailedException();
         }
     }
 

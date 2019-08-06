@@ -1,23 +1,12 @@
 package com.hyd.ssdb;
 
-import com.hyd.ssdb.conf.Cluster;
-import com.hyd.ssdb.conf.Server;
-import com.hyd.ssdb.conf.Sharding;
-import com.hyd.ssdb.conn.Connection;
-import com.hyd.ssdb.conn.ConnectionPool;
-import com.hyd.ssdb.conn.ConnectionPoolManager;
-import com.hyd.ssdb.conn.PoolAndConnection;
-import com.hyd.ssdb.protocol.Request;
-import com.hyd.ssdb.protocol.Response;
-import com.hyd.ssdb.protocol.WriteRequest;
+import com.hyd.ssdb.conf.*;
+import com.hyd.ssdb.conn.*;
+import com.hyd.ssdb.protocol.*;
 import com.hyd.ssdb.util.IdScore;
 import com.hyd.ssdb.util.KeyValue;
+import java.util.*;
 import org.slf4j.LoggerFactory;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * 实现 SsdbClient 的一些底层方法
@@ -120,16 +109,16 @@ public abstract class AbstractClient {
 
                 response = sendRequest(request, connection);
                 needResend = false;
-            } catch (SsdbNoServerAvailableException e) {
+            } catch (SsdbNoServerAvailableException | SsdbServerException e) {
                 throw e;
             } catch (SsdbClientException e) {
                 LOG.error("Connection error", e);
 
                 // 标记不可用的服务器，这样下次循环就会切换到其他服务器了
-                connectionPoolManager.reportInvalidConnection(connection);
+                if (connection != null) {
+                    connectionPoolManager.reportInvalidConnection(connection);
+                }
                 needResend = true;
-            } catch (SsdbServerException e) {
-                throw e;
             } catch (SsdbException e) {
                 throw e;
             } catch (Exception e) {
@@ -150,7 +139,7 @@ public abstract class AbstractClient {
 
     protected List<Response> sendRequestToAll(Request request) {
         List<PoolAndConnection> pacList = connectionPoolManager.getAllConnections(request);
-        List<Response> responseList = new ArrayList<Response>();
+        List<Response> responseList = new ArrayList<>();
 
         for (PoolAndConnection pac : pacList) {
             Connection connection = pac.getConnection();
@@ -166,7 +155,7 @@ public abstract class AbstractClient {
     }
 
     // 发送一个命令，但不会把连接返回给连接池（内部使用）
-    private Response sendRequest(Request request, Connection connection) {
+    private static Response sendRequest(Request request, Connection connection) {
         try {
             connection.send(request.toBytes());
             Response response = connection.receivePacket();
@@ -181,7 +170,7 @@ public abstract class AbstractClient {
     }
 
     // 检查服务器回应，如果是错误回应则抛出一个异常
-    private void checkResponse(String requestHeader, Response response) {
+    private static void checkResponse(String requestHeader, Response response) {
         String header = response.getHead().toString();
         LOG.debug("RESPONSE(" + requestHeader + "): [" + header + "] - (" + response.getBody().size() + " blocks)");
 
@@ -201,7 +190,7 @@ public abstract class AbstractClient {
      * @return 新生成的数组
      */
     protected String[] prependCommand(String token, List<String> parameterList) {
-        String[] parameters = parameterList.toArray(new String[parameterList.size()]);
+        String[] parameters = parameterList.toArray(new String[0]);
         String[] command = new String[parameters.length + 1];
         command[0] = token;
         System.arraycopy(parameters, 0, command, 1, parameters.length);
@@ -242,7 +231,7 @@ public abstract class AbstractClient {
 
     // 将 token1，token2 和 parameters 组合成一个字符串数组
     protected String[] prependCommand(String token1, String token2, List<String> parameters) {
-        return prependCommand(token1, token2, parameters.toArray(new String[parameters.size()]));
+        return prependCommand(token1, token2, parameters.toArray(new String[0]));
     }
 
     // 将 token1，token2 和 keyValues 组合成一个字符串数组
@@ -290,35 +279,35 @@ public abstract class AbstractClient {
     protected List<String[]> splitKeys(String[] keys) {
 
         // {clusterId -> List<key>}
-        Map<String, List<String>> groups = new HashMap<String, List<String>>();
+        Map<String, List<String>> groups = new HashMap<>();
 
         for (String key : keys) {
             Cluster cluster = getSharding().getClusterByKey(key);
             String clusterId = cluster.getId();
 
             if (!groups.containsKey(clusterId)) {
-                groups.put(clusterId, new ArrayList<String>());
+                groups.put(clusterId, new ArrayList<>());
             }
 
             groups.get(clusterId).add(key);
         }
 
-        ArrayList<String[]> result = new ArrayList<String[]>();
+        ArrayList<String[]> result = new ArrayList<>();
         for (List<String> keyList : groups.values()) {
-            result.add(keyList.toArray(new String[keyList.size()]));
+            result.add(keyList.toArray(new String[0]));
         }
 
         return result;
     }
 
     protected List<String[]> splitKeys(List<String> keys) {
-        return splitKeys(keys.toArray(new String[keys.size()]));
+        return splitKeys(keys.toArray(new String[0]));
     }
 
     protected List<String[]> splitKeyValues(String[] keyValues) {
 
         // {clusterId -> List<key,value,...>}
-        Map<String, List<String>> groups = new HashMap<String, List<String>>();
+        Map<String, List<String>> groups = new HashMap<>();
 
         for (int i = 0; i < keyValues.length; i += 2) {
             String key = keyValues[i];
@@ -327,16 +316,16 @@ public abstract class AbstractClient {
             String clusterId = cluster.getId();
 
             if (!groups.containsKey(clusterId)) {
-                groups.put(clusterId, new ArrayList<String>());
+                groups.put(clusterId, new ArrayList<>());
             }
 
             groups.get(clusterId).add(key);
             groups.get(clusterId).add(value);
         }
 
-        ArrayList<String[]> result = new ArrayList<String[]>();
+        ArrayList<String[]> result = new ArrayList<>();
         for (List<String> keyList : groups.values()) {
-            result.add(keyList.toArray(new String[keyList.size()]));
+            result.add(keyList.toArray(new String[0]));
         }
 
         return result;
@@ -345,7 +334,7 @@ public abstract class AbstractClient {
     protected List<List<KeyValue>> splitKeyValues(List<KeyValue> keyValues) {
 
         // {clusterId -> List<key,value,...>}
-        Map<String, List<KeyValue>> groups = new HashMap<String, List<KeyValue>>();
+        Map<String, List<KeyValue>> groups = new HashMap<>();
 
         for (KeyValue keyValue : keyValues) {
             String key = keyValue.getKey();
@@ -353,17 +342,17 @@ public abstract class AbstractClient {
             String clusterId = cluster.getId();
 
             if (!groups.containsKey(clusterId)) {
-                groups.put(clusterId, new ArrayList<KeyValue>());
+                groups.put(clusterId, new ArrayList<>());
             }
 
             groups.get(clusterId).add(keyValue);
         }
 
-        return new ArrayList<List<KeyValue>>(groups.values());
+        return new ArrayList<>(groups.values());
     }
 
     protected List<String> combineBlocks(List<Response> responseList) {
-        List<String> result = new ArrayList<String>();
+        List<String> result = new ArrayList<>();
         for (Response response : responseList) {
             result.addAll(response.getBlocks());
         }
@@ -371,7 +360,7 @@ public abstract class AbstractClient {
     }
 
     protected List<KeyValue> combineKeyValues(List<Response> responseList) {
-        List<KeyValue> result = new ArrayList<KeyValue>();
+        List<KeyValue> result = new ArrayList<>();
         for (Response response : responseList) {
             result.addAll(response.getKeyValues());
         }
