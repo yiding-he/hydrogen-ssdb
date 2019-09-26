@@ -1,25 +1,18 @@
 package com.hyd.ssdb.sharding;
 
-import com.hyd.ssdb.SsdbClientException;
-import com.hyd.ssdb.SsdbException;
-import com.hyd.ssdb.SsdbNoClusterAvailableException;
-import com.hyd.ssdb.conf.Cluster;
-import com.hyd.ssdb.conf.SPOFStrategy;
-import com.hyd.ssdb.conf.Sharding;
+import com.hyd.ssdb.*;
+import com.hyd.ssdb.conf.*;
 import com.hyd.ssdb.util.MD5;
 import com.hyd.ssdb.util.Range;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * 基于一致性哈希的分片策略。这是 hydrogen-ssdb 实现的缺省分片策略。
- * <p/>
+ * <p></p>
  * ConsistentHashSharding 有一个属性叫做 {@link #spofStrategy}，用于决定当出现单点故障时如何处理。
- * <p/>
+ * <p></p>
  * created at 15-12-8
  *
  * @author Yiding

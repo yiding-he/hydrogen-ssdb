@@ -1,29 +1,19 @@
 package com.hyd.ssdb.conn;
 
-import com.hyd.ssdb.SsdbClientException;
-import com.hyd.ssdb.SsdbNoClusterAvailableException;
-import com.hyd.ssdb.SsdbNoServerAvailableException;
-import com.hyd.ssdb.SsdbSocketFailedException;
-import com.hyd.ssdb.conf.Cluster;
-import com.hyd.ssdb.conf.Server;
-import com.hyd.ssdb.conf.Sharding;
+import com.hyd.ssdb.*;
+import com.hyd.ssdb.conf.*;
 import com.hyd.ssdb.protocol.Request;
 import com.hyd.ssdb.protocol.WriteRequest;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * NetworkManager 有两个职责：
  * 1、管理网络的拓扑结构（通过 Sharding 类），决定请求发送到哪个 SSDB 服务器；
  * 2、当请求发送失败时，自动更新失效的服务器列表，并尝试重新发送请求到同一
  * Cluster 的其他服务器，直到没有服务器可用，才抛出异常。
- * <p/>
- * created at 15-12-3
  *
  * @author Yiding
  */
