@@ -83,6 +83,27 @@ hydrogen-ssdb 依赖于下面两个框架：
 
 ## 使用方法
 
+#### 依赖关系
+
+请在 pom.xml 的 `<repositories>` 元素当中添加下面的内容：
+
+```xml
+<repository>
+    <id>yiding-he-github</id>
+    <url>https://raw.githubusercontent.com/yiding-he/mvn-repo/master</url>
+</repository>
+```
+
+然后在 `<dependencies>` 元素当中添加下面的内容：
+
+```xml
+<dependency>
+    <groupId>com.hyd</groupId>
+    <artifactId>hydrogen-ssdb</artifactId>
+    <version>1.2.0</version>
+</dependency>
+```
+
 #### 基本使用方法
 
 ```java
