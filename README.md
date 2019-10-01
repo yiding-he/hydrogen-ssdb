@@ -3,6 +3,7 @@ Java 编写的 SSDB 客户端
 
 ## 更新
 
+* 2019-10-01: 版本 `V1.2.0` 正式发布到 Maven 中心库。
 * 2019-08-06: 版本号更新到 `V1.2.0` 修复了没有 auth 认证的问题
 * 2019-03-27: 版本号更新到 `V1.1.2` 修复了运行过程中添加第二个 Cluster 失败的问题，以及自动扩展哈希段的问题
 * 2019-02-06: 版本号更新到 `V1.1.1` 修复了 `multiGet()` 方法在多服务器环境下返回错误结果的问题。
@@ -85,22 +86,13 @@ hydrogen-ssdb 依赖于下面两个框架：
 
 #### 依赖关系
 
-请在 pom.xml 的 `<repositories>` 元素当中添加下面的内容：
-
-```xml
-<repository>
-    <id>yiding-he-github</id>
-    <url>https://raw.githubusercontent.com/yiding-he/mvn-repo/master</url>
-</repository>
-```
-
-然后在 `<dependencies>` 元素当中添加下面的内容：
+在 `<dependencies>` 元素当中添加下面的内容：
 
 ```xml
 <dependency>
-    <groupId>com.hyd</groupId>
-    <artifactId>hydrogen-ssdb</artifactId>
-    <version>1.2.0</version>
+  <groupId>com.github.yiding-he</groupId>
+  <artifactId>hydrogen-ssdb</artifactId>
+  <version>1.2.0</version>
 </dependency>
 ```
 
