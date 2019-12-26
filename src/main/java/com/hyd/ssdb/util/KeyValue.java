@@ -1,5 +1,7 @@
 package com.hyd.ssdb.util;
 
+import java.util.Arrays;
+
 /**
  * 键值对
  * created at 15-12-3
@@ -10,9 +12,14 @@ public class KeyValue {
 
     private String key;
 
-    private String value;
+    private byte[] value;
 
     public KeyValue(String key, String value) {
+        this.key = key;
+        this.value = value.getBytes();
+    }
+
+    public KeyValue(String key, byte[] value) {
         this.key = key;
         this.value = value;
     }
@@ -25,16 +32,20 @@ public class KeyValue {
         this.key = key;
     }
 
-    public String getValue() {
+    public byte[] getValueBytes() {
         return value;
     }
 
-    public void setValue(String value) {
+    public String getValue() {
+        return new String(value);
+    }
+
+    public void setValue(byte[] value) {
         this.value = value;
     }
 
     @Override
     public String toString() {
-        return "{" + this.key + "=" + this.value + "}";
+        return "{" + this.key + "=" + Arrays.toString(this.value) + "}";
     }
 }

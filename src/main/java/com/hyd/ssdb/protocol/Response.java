@@ -18,7 +18,7 @@ public class Response {
 
     private Block head;
 
-    private List<Block> body = new ArrayList<Block>();
+    private List<Block> body = new ArrayList<>();
 
     public Response() {
     }
@@ -95,7 +95,7 @@ public class Response {
     }
 
     public List<String> getBlocks() {
-        ArrayList<String> blocks = new ArrayList<String>();
+        ArrayList<String> blocks = new ArrayList<>();
         for (Block block : body) {
             blocks.add(block.toString());
         }
@@ -103,19 +103,20 @@ public class Response {
     }
 
     public List<KeyValue> getKeyValues() {
-        List<KeyValue> keyValues = new ArrayList<KeyValue>();
+        List<KeyValue> keyValues = new ArrayList<>();
 
         for (int i = 0; i + 1 < body.size(); i += 2) {
             String key = body.get(i).toString();
-            String value = body.get(i + 1).toString();
-            keyValues.add(new KeyValue(key, value));
+//            String value = body.get(i + 1).toString();
+//            keyValues.add(new KeyValue(key, body.get(i+1).toBytes()));
+            keyValues.add(new KeyValue(key, body.get(i+1).getData()));
         }
 
         return keyValues;
     }
 
     public List<IdScore> getIdScores() {
-        List<IdScore> idScores = new ArrayList<IdScore>();
+        List<IdScore> idScores = new ArrayList<>();
 
         for (int i = 0; i + 1 < body.size(); i += 2) {
             String key = body.get(i).toString();
@@ -127,7 +128,7 @@ public class Response {
     }
 
     public List<String> getIds() {
-        List<String> ids = new ArrayList<String>();
+        List<String> ids = new ArrayList<>();
 
         for (int i = 0; i + 1 < body.size(); i += 2) {
             String key = body.get(i).toString();
@@ -139,7 +140,7 @@ public class Response {
 
     public Map<String, String> getBlocksAsMap() {
 
-        Map<String, String> map = new HashMap<String, String>();
+        Map<String, String> map = new HashMap<>();
         List<KeyValue> keyValues = getKeyValues();
 
         for (KeyValue keyValue : keyValues) {
