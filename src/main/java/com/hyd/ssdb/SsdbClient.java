@@ -166,7 +166,7 @@ public class SsdbClient extends AbstractClient {
             // 需要根据 Cluster 分组，将适合放到同一个 Cluster 的 key 分到同一组
             List<String[]> keysList = splitKeys(keys);
             for (String[] keyArr : keysList) {
-                sendWriteRequest((Object[]) prependCommand("multi_del", keyArr));
+                sendWriteRequest(prependCommand("multi_del", keyArr));
             }
 
         }
@@ -179,7 +179,7 @@ public class SsdbClient extends AbstractClient {
             // 需要根据 Cluster 分组，将适合放到同一个 Cluster 的 key 分到同一组
             List<String[]> keysList = splitKeys(keys);
             for (String[] keyArr : keysList) {
-                sendWriteRequest((Object[]) prependCommand("multi_del", keyArr));
+                sendWriteRequest(prependCommand("multi_del", keyArr));
             }
         }
     }
@@ -282,6 +282,35 @@ public class SsdbClient extends AbstractClient {
         return multiGet(Arrays.asList(keys));
     }
 
+    public List<byte[]> multiGetBytes(List<String> keys)
+    {
+        if (keys == null || keys.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<byte[]> result;
+
+        if (getSharding().getClusters().size() == 1)
+        {
+            result = new ArrayList<>();
+            String[] command = prependCommand("multi_get", keys);
+            List<KeyValue> keyValues = sendRequest(command).getKeyValues();
+            for (KeyValue keyValue : keyValues) {
+                result.add(keyValue.getValueBytes());
+            }
+        }
+        else
+        {
+            result = new ArrayList<>();
+            for (String key : keys)
+            {
+                result.add(getBytes(key));
+            }
+        }
+
+        return result;
+    }
+
     public List<String> multiGet(List<String> keys) {
 
         if (keys == null || keys.isEmpty()) {
@@ -291,15 +320,15 @@ public class SsdbClient extends AbstractClient {
         List<String> result;
 
         if (getSharding().getClusters().size() == 1) {
-            result = new ArrayList<String>();
+            result = new ArrayList<>();
             String[] command = prependCommand("multi_get", keys);
-            List<KeyValue> keyValues = sendRequest((Object[]) command).getKeyValues();
+            List<KeyValue> keyValues = sendRequest(command).getKeyValues();
             for (KeyValue keyValue : keyValues) {
                 result.add(keyValue.getValue());
             }
 
         } else {
-            result = new ArrayList<String>();
+            result = new ArrayList<>();
             for (String key : keys) {
                 result.add(get(key));
             }
@@ -321,7 +350,7 @@ public class SsdbClient extends AbstractClient {
         List<String[]> keyValuesList = splitKeyValues(keyValues);
         for (String[] keyValueArr : keyValuesList) {
             String[] command = prependCommand("multi_set", keyValueArr);
-            sendWriteRequest((Object[]) command);
+            sendWriteRequest(command);
         }
     }
 
@@ -335,16 +364,19 @@ public class SsdbClient extends AbstractClient {
         List<List<KeyValue>> keyValueLists = splitKeyValues(keyValues);
 
         for (List<KeyValue> keyValueList : keyValueLists) {
-            String[] command = new String[keyValueList.size() * 2 + 1];
+            Object[] command = new Object[keyValueList.size() * 2 + 1];
             command[0] = "multi_set";
 
             for (int i = 0; i < keyValueList.size(); i++) {
                 KeyValue keyValue = keyValueList.get(i);
                 command[i * 2 + 1] = keyValue.getKey();
-                command[i * 2 + 2] = keyValue.getValue();
+//                command[i * 2 + 2] = keyValue.getValue();
+                command[i * 2 + 2] = keyValue.getValueBytes();
             }
 
-            sendWriteRequest((Object[]) command);
+//            sendWriteRequest("set", key, value);
+
+            sendWriteRequest(command);
         }
     }
 
@@ -416,11 +448,11 @@ public class SsdbClient extends AbstractClient {
         }
 
         String[] command = prependCommand("multi_hset", key, props);
-        sendWriteRequest((Object[]) command);
+        sendWriteRequest(command);
     }
 
     public void multiHset(String key, List<KeyValue> props) {
-        sendWriteRequest((Object[]) prependCommandKeyValue("multi_hset", key, props));
+        sendWriteRequest(prependCommandKeyValue("multi_hset", key, props));
     }
 
     public List<KeyValue> multiHget(String key, String... propNames) {
@@ -428,11 +460,11 @@ public class SsdbClient extends AbstractClient {
     }
 
     public List<KeyValue> multiHget(String key, List<String> propNames) {
-        return sendRequest((Object[]) prependCommand("multi_hget", key, propNames)).getKeyValues();
+        return sendRequest(prependCommand("multi_hget", key, propNames)).getKeyValues();
     }
 
     public void multiHdel(String key, String... propNames) {
-        sendWriteRequest((Object[]) prependCommand("multi_hdel", key, propNames));
+        sendWriteRequest(prependCommand("multi_hdel", key, propNames));
     }
 
     //////////////////////////////////////////////////////////////// sorted set
@@ -589,11 +621,11 @@ public class SsdbClient extends AbstractClient {
     }
 
     public long multiZset(String key, List<IdScore> idScores) {
-        return sendWriteRequest((Object[]) prependCommandIdScore("multi_zset", key, idScores)).getLongResult(0);
+        return sendWriteRequest(prependCommandIdScore("multi_zset", key, idScores)).getLongResult(0);
     }
 
     public List<IdScore> multiZget(String key, List<String> ids) {
-        return sendRequest((Object[]) prependCommand("multi_zget", key, ids)).getIdScores();
+        return sendRequest(prependCommand("multi_zget", key, ids)).getIdScores();
     }
 
     public List<IdScore> multiZget(String key, String... ids) {
@@ -601,13 +633,13 @@ public class SsdbClient extends AbstractClient {
     }
 
     public void multiZdel(String key, List<String> ids) {
-        sendWriteRequest((Object[]) prependCommand("multi_zdel", key, ids));
+        sendWriteRequest(prependCommand("multi_zdel", key, ids));
     }
 
     //////////////////////////////////////////////////////////////
 
     public int qpushFront(String key, String... values) {
-        return sendWriteRequest((Object[]) prependCommand("qpush_front", key, values)).getIntResult();
+        return sendWriteRequest(prependCommand("qpush_front", key, values)).getIntResult();
     }
 
     public int qpushFront(String key, byte[] bytes) {
@@ -615,7 +647,7 @@ public class SsdbClient extends AbstractClient {
     }
 
     public int qpushBack(String key, String... values) {
-        return sendWriteRequest((Object[]) prependCommand("qpush_back", key, values)).getIntResult();
+        return sendWriteRequest(prependCommand("qpush_back", key, values)).getIntResult();
     }
 
     public int qpushBack(String key, byte[] bytes) {
