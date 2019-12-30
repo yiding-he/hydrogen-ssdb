@@ -6,6 +6,7 @@ import com.hyd.ssdb.protocol.*;
 import java.io.*;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
+import java.nio.charset.Charset;
 import java.util.*;
 
 /**
@@ -95,9 +96,13 @@ public class Connection {
     }
 
     public Response receivePacket() {
+        return receivePacket(AbstractClient.DEFAULT_CHARSET);
+    }
+
+    public Response receivePacket(Charset charset) {
 
         ByteArrayOutputStream bos = null;
-        Response response = new Response();
+        Response response = new Response(charset);
 
         try {
             InputStream inputStream = this.socket.getInputStream();

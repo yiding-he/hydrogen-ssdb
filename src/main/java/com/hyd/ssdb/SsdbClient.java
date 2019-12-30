@@ -1,13 +1,9 @@
 package com.hyd.ssdb;
 
-import com.hyd.ssdb.conf.Cluster;
-import com.hyd.ssdb.conf.Server;
-import com.hyd.ssdb.conf.Sharding;
-import com.hyd.ssdb.conf.SocketConfig;
+import com.hyd.ssdb.conf.*;
 import com.hyd.ssdb.protocol.Response;
 import com.hyd.ssdb.sharding.ConsistentHashSharding;
 import com.hyd.ssdb.util.*;
-
 import java.util.*;
 
 /**
@@ -17,7 +13,7 @@ import java.util.*;
  *
  * @author Yiding
  */
-@SuppressWarnings({"WeakerAccess", "unused"})
+@SuppressWarnings({"WeakerAccess", "unused", "RedundantCast"})
 public class SsdbClient extends AbstractClient {
 
     /**
@@ -264,7 +260,7 @@ public class SsdbClient extends AbstractClient {
             for (KeyValue keyValue : result) {
                 keyConsumer.process(keyValue);
             }
-            start = result.get(result.size() - 1).getKey();
+            start = new String(result.get(result.size() - 1).getKey(), getCharset());
             result = scan(start, end, batchSize);
         }
     }
@@ -291,15 +287,15 @@ public class SsdbClient extends AbstractClient {
         List<String> result;
 
         if (getSharding().getClusters().size() == 1) {
-            result = new ArrayList<String>();
+            result = new ArrayList<>();
             String[] command = prependCommand("multi_get", keys);
             List<KeyValue> keyValues = sendRequest((Object[]) command).getKeyValues();
             for (KeyValue keyValue : keyValues) {
-                result.add(keyValue.getValue());
+                result.add(keyValue.getValueString());
             }
 
         } else {
-            result = new ArrayList<String>();
+            result = new ArrayList<>();
             for (String key : keys) {
                 result.add(get(key));
             }
@@ -340,8 +336,8 @@ public class SsdbClient extends AbstractClient {
 
             for (int i = 0; i < keyValueList.size(); i++) {
                 KeyValue keyValue = keyValueList.get(i);
-                command[i * 2 + 1] = keyValue.getKey();
-                command[i * 2 + 2] = keyValue.getValue();
+                command[i * 2 + 1] = keyValue.getKeyString();
+                command[i * 2 + 2] = keyValue.getValueString();
             }
 
             sendWriteRequest((Object[]) command);
@@ -395,7 +391,7 @@ public class SsdbClient extends AbstractClient {
     }
 
     public Map<String, String> hgetallmap(String key) {
-        return sendRequest("hgetall", key).getBlocksAsMap();
+        return sendRequest("hgetall", key).getBlocksAsStringMap(getCharset());
     }
 
     public List<KeyValue> hscan(String key, String startExclude, String endInclude, int limit) {

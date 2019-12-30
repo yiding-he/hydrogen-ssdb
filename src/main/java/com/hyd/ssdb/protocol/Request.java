@@ -1,13 +1,12 @@
 package com.hyd.ssdb.protocol;
 
+import com.hyd.ssdb.AbstractClient;
 import com.hyd.ssdb.SsdbException;
 import com.hyd.ssdb.conf.Server;
 import com.hyd.ssdb.util.Bytes;
-
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
-
-import static com.hyd.ssdb.protocol.ProtocolConfig.DEFAULT_CHARSET;
 
 /**
  * 请求
@@ -17,7 +16,7 @@ import static com.hyd.ssdb.protocol.ProtocolConfig.DEFAULT_CHARSET;
  */
 public class Request {
 
-    private String charset = DEFAULT_CHARSET;
+    private Charset charset = AbstractClient.DEFAULT_CHARSET;
 
     private Block header;
 
@@ -46,12 +45,12 @@ public class Request {
         this.forceServer = forceServer;
     }
 
-    public void setCharset(String charset) {
-        this.charset = charset;
+    public Charset getCharset() {
+        return charset;
     }
 
-    public String getCharset() {
-        return charset;
+    public void setCharset(Charset charset) {
+        this.charset = charset;
     }
 
     private void readTokens(Object[] tokens) {
@@ -61,8 +60,7 @@ public class Request {
             throw new SsdbException("Command '" + tokens[0] + "' has no parameters or not supported.");
         }
 
-        this.header = new Block(tokens[0].toString());
-        this.header.setCharset(this.charset);
+        this.header = new Block(tokens[0].toString().getBytes(charset));
 
         for (int i = 1; i < tokens.length; i++) {
             Object token = tokens[i];
@@ -70,9 +68,8 @@ public class Request {
             if (token instanceof byte[]) {
                 block = new Block((byte[]) token);
             } else {
-                block = new Block(token.toString());
+                block = new Block(token.toString().getBytes(charset));
             }
-            block.setCharset(this.charset);
             this.blocks.add(block);
         }
     }
