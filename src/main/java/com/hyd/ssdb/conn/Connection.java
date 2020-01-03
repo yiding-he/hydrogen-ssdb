@@ -25,7 +25,7 @@ public class Connection {
 
     private int buffer;         // 读取数据时缓存区的长度
 
-    private Map<String, Object> properties = new HashMap<String, Object>();   // 其他属性
+    private Map<String, Object> properties = new HashMap<>();   // 其他属性
 
     public Connection(Server server) {
         this(server.getHost(), server.getPort(), server.getPass(),
@@ -109,12 +109,10 @@ public class Connection {
             bos = new ByteArrayOutputStream(10240);
             StringBuilder numSb = new StringBuilder();
 
-
-            int b;
+            byte b;
             int dataLength = 0, dataCounter = 0;
             int blockStatus = 0; // 0=ready, 1=receiving_length, 2=receiving_data, 3=data_finished
             int responseStatus = 0; //0=ready, 1=head_received
-
 
             byte[] bs = new byte[this.buffer];
 
@@ -153,11 +151,12 @@ public class Connection {
                         } else { // blockStatus == 3
                             blockStatus = 0;
 
+                            Block block = new Block(bos.toByteArray());
                             if (responseStatus == 0) {
-                                response.setHead(new Block(bos.toByteArray()));
+                                response.setHead(block);
                                 responseStatus = 1;
                             } else {
-                                response.addBodyBlock(new Block(bos.toByteArray()));
+                                response.addBodyBlock(block);
                             }
                         }
                     } else {

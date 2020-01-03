@@ -23,6 +23,10 @@ public class KeyValue {
         this.charset = charset;
     }
 
+    public KeyValue(String key, byte[] value, Charset charset) {
+        this(key.getBytes(charset), value, charset);
+    }
+
     public KeyValue(String key, String value) {
         this(key, value, AbstractClient.DEFAULT_CHARSET);
     }

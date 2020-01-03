@@ -1,20 +1,16 @@
 package com.hyd.ssdb;
 
+import static org.junit.Assert.*;
+
 import com.hyd.ssdb.conf.Server;
 import com.hyd.ssdb.protocol.Request;
 import com.hyd.ssdb.protocol.Response;
-import com.hyd.ssdb.util.Bytes;
-import com.hyd.ssdb.util.IdScore;
-import com.hyd.ssdb.util.KeyValue;
-import com.hyd.ssdb.util.Processor;
-import org.junit.Test;
-
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import com.hyd.ssdb.util.*;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import static org.junit.Assert.*;
+import org.junit.Test;
 
 /**
  * (description)
@@ -38,6 +34,26 @@ public class SsdbClientTest extends BaseTest {
         ssdbClient.multiSet("key1", "value1", "key2", "value2", "key3", "value3");
         List<String> values = ssdbClient.multiGet("key1", "key2", "key3");
         assertEquals(Arrays.asList("value1", "value2", "value3"), values);
+    }
+
+    @Test
+    public void testMultiGetBytes() throws Exception {
+        Charset charset = StandardCharsets.UTF_16;
+
+        byte[] hello1 = "你好".getBytes(charset);
+        System.out.println("Bytes: " + Arrays.toString(hello1));
+
+        KeyValue keyValue = new KeyValue("hello1", hello1, charset);
+        System.out.println("KeyValue: " + Arrays.toString(keyValue.getValue()));
+        ssdbClient.multiSet(Collections.singletonList(keyValue));
+
+        byte[] hello1_ = ssdbClient.getBytes("hello1");
+        System.out.println("GetBytes: " + Arrays.toString(hello1_));
+
+        List<byte[]> bytesList = ssdbClient.multiGetBytes("hello1");
+        System.out.println("MultiGetBytes: " + Arrays.toString(bytesList.get(0)));
+
+        assertEquals("你好", new String(bytesList.get(0), charset));
     }
 
     @Test
@@ -191,6 +207,13 @@ public class SsdbClientTest extends BaseTest {
         assertEquals(1, ssdbClient.getbit("bitkey", 2));
         assertEquals(1, ssdbClient.getbit("bitkey", 3));
 */
+    }
+
+    @Test
+    public void testGetByte() throws Exception {
+        byte[] bytes = {-1, -2, -3, -4, -5};
+        ssdbClient.set("bytes", bytes);
+        assertArrayEquals(bytes, ssdbClient.getBytes("bytes"));
     }
 
     @Test

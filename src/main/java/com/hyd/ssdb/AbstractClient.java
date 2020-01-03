@@ -176,7 +176,8 @@ public abstract class AbstractClient {
     // 发送一个命令，但不会把连接返回给连接池（内部使用）
     private Response sendRequest(Request request, Connection connection) {
         try {
-            connection.send(request.toBytes());
+            byte[] bytes = request.toBytes();
+            connection.send(bytes);
             Response response = connection.receivePacket(this.charset);
             checkResponse(request.getHeader().toString(), response);
             return response;
