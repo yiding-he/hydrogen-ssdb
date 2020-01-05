@@ -66,8 +66,10 @@ public class SsdbClient extends AbstractClient {
 
     //////////////////////////////////////////////////////////////
 
-    public SsdbClient(String host, int port, String pass, int soTimeout, int poolMaxTotal) throws SsdbException {
-        super(new ConsistentHashSharding(new Cluster(new Server(host, port, pass, true, soTimeout, poolMaxTotal))));
+    public SsdbClient(String host, int port, String pass, int timeoutSeconds, int poolMaxTotal) throws SsdbException {
+        super(new ConsistentHashSharding(new Cluster(
+                new Server(host, port, pass, true, timeoutSeconds, poolMaxTotal)
+        )));
     }
 
     public static SsdbClient fromSingleCluster(List<Server> servers) {

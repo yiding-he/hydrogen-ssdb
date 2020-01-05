@@ -69,12 +69,12 @@ public class Server {
         this.master = master;
     }
 
-    public Server(String host, int port, String pass, boolean master, int soTimeout, int poolMaxTotal) {
+    public Server(String host, int port, String pass, boolean master, int timeoutSeconds, int poolMaxTotal) {
         this.host = host;
         this.port = port;
         this.pass = pass;
         this.master = master;
-        this.socketConfig.setSoTimeout(soTimeout);
+        this.socketConfig.setSoTimeout(timeoutSeconds * 1000);
         this.poolConfig.setMaxTotal(poolMaxTotal);
     }
 
