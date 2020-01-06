@@ -43,7 +43,7 @@ public class SsdbClientTest extends BaseTest {
         byte[] hello1 = "你好".getBytes(charset);
         System.out.println("Bytes: " + Arrays.toString(hello1));
 
-        KeyValue keyValue = new KeyValue("hello1", hello1, charset);
+        KeyValue keyValue = new KeyValue("hello1", hello1, null);
         System.out.println("KeyValue: " + Arrays.toString(keyValue.getValue()));
         ssdbClient.multiSet(Collections.singletonList(keyValue));
 
@@ -54,6 +54,18 @@ public class SsdbClientTest extends BaseTest {
         System.out.println("MultiGetBytes: " + Arrays.toString(bytesList.get(0)));
 
         assertEquals("你好", new String(bytesList.get(0), charset));
+    }
+
+    @Test
+    public void testMultiGetBytes2() throws Exception {
+        byte[] bytes = {-1, -2, -3, -4, -5};
+
+        KeyValue keyValue = new KeyValue("bytes", bytes, null);
+        ssdbClient.multiSet(Collections.singletonList(keyValue));
+
+        List<byte[]> bytesList = ssdbClient.multiGetBytes("bytes");
+        assertFalse(bytesList.isEmpty());
+        assertArrayEquals(bytes, bytesList.get(0));
     }
 
     @Test

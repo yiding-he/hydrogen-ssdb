@@ -24,7 +24,7 @@ public class KeyValue {
     }
 
     public KeyValue(String key, byte[] value, Charset charset) {
-        this(key.getBytes(charset), value, charset);
+        this((charset == null? key.getBytes(): key.getBytes(charset)), value, charset);
     }
 
     public KeyValue(String key, String value) {
@@ -40,7 +40,7 @@ public class KeyValue {
     }
 
     public String getKeyString() {
-        return new String(this.key, this.charset);
+        return this.charset == null? new String(this.key) :  new String(this.key, this.charset);
     }
 
     public void setKey(byte[] key) {
