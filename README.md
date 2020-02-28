@@ -97,7 +97,7 @@ hydrogen-ssdb 依赖于下面两个框架：
 <dependency>
   <groupId>com.github.yiding-he</groupId>
   <artifactId>hydrogen-ssdb</artifactId>
-  <version>1.2.0</version>
+  <version>${hydrogen-ssdb.version}</version>
 </dependency>
 ```
 
