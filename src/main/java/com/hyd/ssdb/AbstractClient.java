@@ -5,6 +5,8 @@ import com.hyd.ssdb.conn.*;
 import com.hyd.ssdb.protocol.*;
 import com.hyd.ssdb.util.IdScore;
 import com.hyd.ssdb.util.KeyValue;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import org.slf4j.LoggerFactory;
 
@@ -16,17 +18,32 @@ import org.slf4j.LoggerFactory;
 @SuppressWarnings("WeakerAccess")
 public abstract class AbstractClient {
 
-    static final org.slf4j.Logger LOG = LoggerFactory.getLogger(AbstractClient.class);
+    public static final Charset DEFAULT_CHARSET = StandardCharsets.UTF_8;
+
+    private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(AbstractClient.class);
 
     /**
      * 管理所有的 SSDB 连接
      */
     private ConnectionPoolManager connectionPoolManager;
 
+    /**
+     * 字符编码
+     */
+    private Charset charset = DEFAULT_CHARSET;
+
     //////////////////////////////////////////////////////////////
 
     public AbstractClient(Sharding sharding) {
         this.connectionPoolManager = new ConnectionPoolManager(sharding);
+    }
+
+    public void setCharset(Charset charset) {
+        this.charset = charset;
+    }
+
+    public Charset getCharset() {
+        return charset;
     }
 
     /**
@@ -134,7 +151,9 @@ public abstract class AbstractClient {
     }
 
     protected List<Response> sendRequestToAll(Object... tokens) {
-        return sendRequestToAll(new Request(tokens));
+        Request request = new Request(tokens);
+        request.setCharset(this.charset);
+        return sendRequestToAll(request);
     }
 
     protected List<Response> sendRequestToAll(Request request) {
@@ -155,10 +174,11 @@ public abstract class AbstractClient {
     }
 
     // 发送一个命令，但不会把连接返回给连接池（内部使用）
-    private static Response sendRequest(Request request, Connection connection) {
+    private Response sendRequest(Request request, Connection connection) {
         try {
-            connection.send(request.toBytes());
-            Response response = connection.receivePacket();
+            byte[] bytes = request.toBytes();
+            connection.send(bytes);
+            Response response = connection.receivePacket(this.charset);
             checkResponse(request.getHeader().toString(), response);
             return response;
 
@@ -242,8 +262,8 @@ public abstract class AbstractClient {
 
         for (int i = 0; i < keyValues.size(); i++) {
             KeyValue keyValue = keyValues.get(i);
-            command[i * 2 + 2] = keyValue.getKey();
-            command[i * 2 + 3] = keyValue.getValue();
+            command[i * 2 + 2] = keyValue.getKeyString();
+            command[i * 2 + 3] = keyValue.getValueString();
         }
         return command;
     }
@@ -337,7 +357,7 @@ public abstract class AbstractClient {
         Map<String, List<KeyValue>> groups = new HashMap<>();
 
         for (KeyValue keyValue : keyValues) {
-            String key = keyValue.getKey();
+            String key = keyValue.getKeyString();
             Cluster cluster = getSharding().getClusterByKey(key);
             String clusterId = cluster.getId();
 

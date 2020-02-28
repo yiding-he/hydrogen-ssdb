@@ -1,13 +1,9 @@
 package com.hyd.ssdb;
 
-import com.hyd.ssdb.conf.Cluster;
-import com.hyd.ssdb.conf.Server;
-import com.hyd.ssdb.conf.Sharding;
-import com.hyd.ssdb.conf.SocketConfig;
+import com.hyd.ssdb.conf.*;
 import com.hyd.ssdb.protocol.Response;
 import com.hyd.ssdb.sharding.ConsistentHashSharding;
 import com.hyd.ssdb.util.*;
-
 import java.util.*;
 
 /**
@@ -17,7 +13,7 @@ import java.util.*;
  *
  * @author Yiding
  */
-@SuppressWarnings({"WeakerAccess", "unused"})
+@SuppressWarnings({"WeakerAccess", "unused", "RedundantCast"})
 public class SsdbClient extends AbstractClient {
 
     /**
@@ -45,7 +41,7 @@ public class SsdbClient extends AbstractClient {
     // 创建只连接到一台服务器的，带密码的 SsdbClient 对象
     public SsdbClient(String host, int port, int timeoutSeconds, String pass) throws SsdbException {
         super(new ConsistentHashSharding(Cluster.fromSingleServer(
-                host, port, pass, timeoutSeconds, SocketConfig.DEFAULT_SO_BUFFER_SIZE)));
+            host, port, pass, timeoutSeconds, SocketConfig.DEFAULT_SO_BUFFER_SIZE)));
     }
 
     // 创建只连接到一台服务器的，带密码的 SsdbClient 对象
@@ -70,8 +66,10 @@ public class SsdbClient extends AbstractClient {
 
     //////////////////////////////////////////////////////////////
 
-    public SsdbClient(String host, int port, String pass, int soTimeout, int poolMaxTotal) throws SsdbException {
-        super(new ConsistentHashSharding(new Cluster(new Server(host, port, pass, true, soTimeout, poolMaxTotal))));
+    public SsdbClient(String host, int port, String pass, int timeoutSeconds, int poolMaxTotal) throws SsdbException {
+        super(new ConsistentHashSharding(new Cluster(
+                new Server(host, port, pass, true, timeoutSeconds, poolMaxTotal)
+        )));
     }
 
     public static SsdbClient fromSingleCluster(List<Server> servers) {
@@ -91,7 +89,7 @@ public class SsdbClient extends AbstractClient {
     }
 
     public String info(Server server) {
-        Response response = sendRequest(server,"info");
+        Response response = sendRequest(server, "info");
         return response.joinBlocks('\n');
     }
 
@@ -264,7 +262,7 @@ public class SsdbClient extends AbstractClient {
             for (KeyValue keyValue : result) {
                 keyConsumer.process(keyValue);
             }
-            start = result.get(result.size() - 1).getKey();
+            start = new String(result.get(result.size() - 1).getKey(), getCharset());
             result = scan(start, end, batchSize);
         }
     }
@@ -282,6 +280,22 @@ public class SsdbClient extends AbstractClient {
         return multiGet(Arrays.asList(keys));
     }
 
+    public List<byte[]> multiGetBytes(String... keys) {
+
+        if (keys == null || keys.length == 0) {
+            return Collections.emptyList();
+        }
+
+        return multiGetBytes(Arrays.asList(keys));
+    }
+
+    /**
+     * 一次取多个 key。注意如果 Sharding 中包含一个以上的 Cluster，那么实际上是对每个 key 执行 get 查询。
+     *
+     * @param keys key 列表
+     *
+     * @return value 列表
+     */
     public List<String> multiGet(List<String> keys) {
 
         if (keys == null || keys.isEmpty()) {
@@ -291,7 +305,40 @@ public class SsdbClient extends AbstractClient {
         List<String> result;
 
         if (getSharding().getClusters().size() == 1) {
-            result = new ArrayList<String>();
+            result = new ArrayList<>();
+            String[] command = prependCommand("multi_get", keys);
+            List<KeyValue> keyValues = sendRequest((Object[]) command).getKeyValues();
+            for (KeyValue keyValue : keyValues) {
+                result.add(keyValue.getValueString());
+            }
+
+        } else {
+            result = new ArrayList<>();
+            for (String key : keys) {
+                result.add(get(key));
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * 一次取多个 key。注意如果 Sharding 中包含一个以上的 Cluster，那么实际上是对每个 key 执行 get 查询。
+     *
+     * @param keys key 列表
+     *
+     * @return value 列表
+     */
+    public List<byte[]> multiGetBytes(List<String> keys) {
+
+        if (keys == null || keys.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<byte[]> result;
+
+        if (getSharding().getClusters().size() == 1) {
+            result = new ArrayList<>();
             String[] command = prependCommand("multi_get", keys);
             List<KeyValue> keyValues = sendRequest((Object[]) command).getKeyValues();
             for (KeyValue keyValue : keyValues) {
@@ -299,9 +346,9 @@ public class SsdbClient extends AbstractClient {
             }
 
         } else {
-            result = new ArrayList<String>();
+            result = new ArrayList<>();
             for (String key : keys) {
-                result.add(get(key));
+                result.add(getBytes(key));
             }
         }
 
@@ -335,7 +382,7 @@ public class SsdbClient extends AbstractClient {
         List<List<KeyValue>> keyValueLists = splitKeyValues(keyValues);
 
         for (List<KeyValue> keyValueList : keyValueLists) {
-            String[] command = new String[keyValueList.size() * 2 + 1];
+            Object[] command = new Object[keyValueList.size() * 2 + 1];
             command[0] = "multi_set";
 
             for (int i = 0; i < keyValueList.size(); i++) {
@@ -344,7 +391,7 @@ public class SsdbClient extends AbstractClient {
                 command[i * 2 + 2] = keyValue.getValue();
             }
 
-            sendWriteRequest((Object[]) command);
+            sendWriteRequest(command);
         }
     }
 
@@ -395,7 +442,7 @@ public class SsdbClient extends AbstractClient {
     }
 
     public Map<String, String> hgetallmap(String key) {
-        return sendRequest("hgetall", key).getBlocksAsMap();
+        return sendRequest("hgetall", key).getBlocksAsStringMap(getCharset());
     }
 
     public List<KeyValue> hscan(String key, String startExclude, String endInclude, int limit) {
@@ -465,12 +512,13 @@ public class SsdbClient extends AbstractClient {
         return sendRequest("zlist", startExclude, endInclude, limit).getBlocks();
     }
 
-    public List<String> zkeys(String key, String keyStartExclude, Long scoreStartInclude, Long scoreEndInclude, int limit) {
+    public List<String> zkeys(String key, String keyStartExclude, Long scoreStartInclude, Long scoreEndInclude,
+                              int limit) {
         return sendRequest("zscan", key,
-                Str.ifBlank(keyStartExclude, ""),
-                Num.ifNull(scoreStartInclude, ""),
-                Num.ifNull(scoreEndInclude, ""),
-                limit
+            Str.ifBlank(keyStartExclude, ""),
+            Num.ifNull(scoreStartInclude, ""),
+            Num.ifNull(scoreEndInclude, ""),
+            limit
         ).getIds();
     }
 
@@ -485,21 +533,23 @@ public class SsdbClient extends AbstractClient {
      *
      * @return 查询结果
      */
-    public List<IdScore> zscan(String key, String keyStartExclude, Long scoreStartInclude, Long scoreEndInclude, int limit) {
+    public List<IdScore> zscan(String key, String keyStartExclude, Long scoreStartInclude, Long scoreEndInclude,
+                               int limit) {
         return sendRequest("zscan", key,
-                Str.ifBlank(keyStartExclude, ""),
-                Num.ifNull(scoreStartInclude, ""),
-                Num.ifNull(scoreEndInclude, ""),
-                limit
+            Str.ifBlank(keyStartExclude, ""),
+            Num.ifNull(scoreStartInclude, ""),
+            Num.ifNull(scoreEndInclude, ""),
+            limit
         ).getIdScores();
     }
 
-    public List<IdScore> zrscan(String key, String keyStartExclude, Long scoreStartInclude, Long scoreEndInclude, int limit) {
+    public List<IdScore> zrscan(String key, String keyStartExclude, Long scoreStartInclude, Long scoreEndInclude,
+                                int limit) {
         return sendRequest("zrscan", key,
-                Str.ifBlank(keyStartExclude, ""),
-                Num.ifNull(scoreStartInclude, ""),
-                Num.ifNull(scoreEndInclude, ""),
-                limit
+            Str.ifBlank(keyStartExclude, ""),
+            Num.ifNull(scoreStartInclude, ""),
+            Num.ifNull(scoreEndInclude, ""),
+            limit
         ).getIdScores();
     }
 

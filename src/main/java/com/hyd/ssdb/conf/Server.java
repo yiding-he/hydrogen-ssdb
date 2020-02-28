@@ -1,5 +1,6 @@
 package com.hyd.ssdb.conf;
 
+import com.hyd.ssdb.conn.Connection;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 
 /**
@@ -18,7 +19,7 @@ public class Server {
 
     private boolean master = true;  // 是否是主服务器。
 
-    private GenericObjectPoolConfig poolConfig = createDefaultPoolConfig();     // 连接池配置参数
+    private GenericObjectPoolConfig<Connection> poolConfig = createDefaultPoolConfig();     // 连接池配置参数
 
     private SocketConfig socketConfig = new SocketConfig();     // 网络配置参数
 
@@ -68,12 +69,12 @@ public class Server {
         this.master = master;
     }
 
-    public Server(String host, int port, String pass, boolean master, int soTimeout, int poolMaxTotal) {
+    public Server(String host, int port, String pass, boolean master, int timeoutSeconds, int poolMaxTotal) {
         this.host = host;
         this.port = port;
         this.pass = pass;
         this.master = master;
-        this.socketConfig.setSoTimeout(soTimeout);
+        this.socketConfig.setSoTimeout(timeoutSeconds * 1000);
         this.poolConfig.setMaxTotal(poolMaxTotal);
     }
 
@@ -89,7 +90,7 @@ public class Server {
     }
 
     public Server(String host, int port, String pass, boolean master,
-                  SocketConfig socketConfig, GenericObjectPoolConfig poolConfig) {
+                  SocketConfig socketConfig, GenericObjectPoolConfig<Connection> poolConfig) {
 
         this.host = host;
         this.port = port;
@@ -105,17 +106,18 @@ public class Server {
         }
     }
 
-    public static GenericObjectPoolConfig createDefaultPoolConfig() {
-        GenericObjectPoolConfig config = new GenericObjectPoolConfig();
+
+    private GenericObjectPoolConfig<Connection> createDefaultPoolConfig() {
+        GenericObjectPoolConfig<Connection> config = new GenericObjectPoolConfig<>();
         config.setMaxIdle(1);
         return config;
     }
 
-    public GenericObjectPoolConfig getPoolConfig() {
+    public GenericObjectPoolConfig<Connection> getPoolConfig() {
         return poolConfig;
     }
 
-    public void setPoolConfig(GenericObjectPoolConfig poolConfig) {
+    public void setPoolConfig(GenericObjectPoolConfig<Connection> poolConfig) {
         this.poolConfig = poolConfig;
     }
 

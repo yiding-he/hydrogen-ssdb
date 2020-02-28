@@ -1,19 +1,16 @@
-<p>
-  <a href="https://github.com/996icu/996.ICU/blob/master/LICENSE">
-    <img alt="996icu" src="https://img.shields.io/badge/license-NPL%20(The%20996%20Prohibited%20License)-blue.svg">
-  </a>
-  <a href="https://www.apache.org/licenses/LICENSE-2.0">
-    <img alt="code style" src="https://img.shields.io/badge/license-Apache%202-4EB1BA.svg?style=flat-square">
-  </a>
-</p>
-
 # hydrogen-ssdb
 Java 编写的 SSDB 客户端
 
 ## 更新
 
-> 注意：master 分支是正在开发中的分支，稳定版请使用对应的版本号分支。
-* 2019-03-27: 开发版本号更新到 `V2.0.0-SNAPSHOT`，项目最低要求 Java 8，并加入 Spring Boot 支持.
+* 2020-01-06: 版本号更新到 `V1.2.2` 
+    * `SsdbClient` 添加 `multiGetBytes()` 方法；
+    * `multiSet(List<KeyValue>)` 也支持字节串；
+    * 修复构造方法中超时时间单位错误的问题。
+* 2019-12-31: 版本号更新到 `V1.2.1` KeyValue 的内容类型改为 byte[] 以便处理 SSDB 中的二进制内容。
+* 2019-10-01: 版本 `V1.2.0` 正式发布到 Maven 中心库。
+* 2019-08-06: 版本号更新到 `V1.2.0` 修复了没有 auth 认证的问题
+* 2019-03-27: 版本号更新到 `V1.1.2` 修复了运行过程中添加第二个 Cluster 失败的问题，以及自动扩展哈希段的问题
 * 2019-02-06: 版本号更新到 `V1.1.1` 修复了 `multiGet()` 方法在多服务器环境下返回错误结果的问题。
 * 2018-05-06: 修复了从节点恢复时没有被认作是从节点的问题。
 * 2018-02-25: 版本号更新到 `V1.1.0`，添加了 `multiGet()` 方法，修复了若干方法在多服务器负载均衡上的 BUG。
@@ -81,6 +78,8 @@ sharding.setSpofStrategy(SPOFStrategy.PreserveKeySpaceStrategy);
 
 所以，`ConsistentHashSharding` 的 `addCluster()` 方法有两个参数，第一个是要添加的 Cluster，第二个是需要被分担负载的 Cluster。
 
+新加入的 Cluster 和原有的 Cluster 将根据双方的权重值重新分配原来的哈希段。假设两个 Cluster 的权重相同，则平分原来的哈希段。这个过程和其他的 Cluster 权重无关。
+
 ## 项目依赖
 
 hydrogen-ssdb 依赖于下面两个框架：
@@ -89,6 +88,18 @@ hydrogen-ssdb 依赖于下面两个框架：
 * slf4j （日志框架）
 
 ## 使用方法
+
+#### 依赖关系
+
+在 `<dependencies>` 元素当中添加下面的内容：
+
+```xml
+<dependency>
+  <groupId>com.github.yiding-he</groupId>
+  <artifactId>hydrogen-ssdb</artifactId>
+  <version>1.2.0</version>
+</dependency>
+```
 
 #### 基本使用方法
 

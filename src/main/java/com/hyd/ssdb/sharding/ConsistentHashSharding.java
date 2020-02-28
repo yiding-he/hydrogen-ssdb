@@ -1,26 +1,18 @@
 package com.hyd.ssdb.sharding;
 
-import com.hyd.ssdb.SsdbClientException;
-import com.hyd.ssdb.SsdbException;
-import com.hyd.ssdb.SsdbNoClusterAvailableException;
-import com.hyd.ssdb.conf.Cluster;
-import com.hyd.ssdb.conf.SPOFStrategy;
-import com.hyd.ssdb.conf.Sharding;
+import com.hyd.ssdb.*;
+import com.hyd.ssdb.conf.*;
 import com.hyd.ssdb.util.MD5;
 import com.hyd.ssdb.util.Range;
+import java.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 /**
  * 基于一致性哈希的分片策略。这是 hydrogen-ssdb 实现的缺省分片策略。
- * <p/>
+ * <p></p>
  * ConsistentHashSharding 有一个属性叫做 {@link #spofStrategy}，用于决定当出现单点故障时如何处理。
- * <p/>
+ * <p></p>
  * created at 15-12-8
  *
  * @author Yiding
@@ -60,13 +52,40 @@ public class ConsistentHashSharding extends Sharding {
         HashMap<String, Range<Integer>> map = new HashMap<String, Range<Integer>>();
         for (Cluster cluster : clusters) {
             map.put(cluster.getId() + "(" + !cluster.isInvalid() + ")",
-                    cluster.getHashRange().duplicate());
+                cluster.getHashRange().duplicate());
         }
         return map;
     }
 
     public void removeCluster(String clusterId) {
-        clusterFailed(getClusterById(clusterId));
+
+        Cluster cluster = getClusterById(clusterId);
+        if (cluster == null) {
+            throw new SsdbNoClusterAvailableException("Cluster " + clusterId + " not found.");
+        }
+
+        int minHash = cluster.getHashRange().getMin();
+        int maxHash = cluster.getHashRange().getMax();
+
+        // 如果是第一个 Cluster，则将后面的向前扩展；否则令前面的向后扩展
+        boolean isFirstCluster = minHash == Integer.MIN_VALUE;
+
+        if (isFirstCluster) {
+            Cluster secondCluster = clusters.get(1);
+            secondCluster.getHashRange().setMin(minHash);
+            LOG.debug("Expand cluster " + secondCluster.getId() + " left to ring start.");
+            return;
+        } else {
+            for (Cluster c : clusters) {
+                if (c.getHashRange().getMax() + 1 == minHash) {   // 找到上一个 cluster
+                    c.getHashRange().setMax(maxHash);
+                    LOG.debug("Expand cluster " + cluster.getId() + " right to " + maxHash);
+                    return;
+                }
+            }
+        }
+
+        throw new SsdbClientException("should not be here");
     }
 
     /**
@@ -103,21 +122,16 @@ public class ConsistentHashSharding extends Sharding {
     }
 
     // 将 toSplitCluster 的右边部分划分给 newCluster
-    private void splitRangeToRight(Cluster newCluster, Cluster toSplitCluster) {
-        Range<Integer> originalRange = toSplitCluster.getHashRange();
+    private void splitRangeToRight(Cluster c2, Cluster c1) {
+        Range<Integer> r1 = c1.getHashRange();
 
-        int split = originalRange.getMin() +
-                (originalRange.getMax() - originalRange.getMin()) * toSplitCluster.getWeight()
-                        / (toSplitCluster.getWeight() + newCluster.getWeight());
+        long split = r1.getMin() +
+            (r1.getMax().longValue() - r1.getMin().longValue())
+                * c1.getWeight() / (c1.getWeight() + c2.getWeight());
 
         // 更新范围
-        setClusterRange(toSplitCluster, originalRange.getMin(), split);
-        setClusterRange(newCluster, split + 1, originalRange.getMax());
-    }
-
-    public synchronized void clusterRestored(Cluster restoredCluster) {
-        restoredCluster.setInvalid(false);
-        restoredCluster.setTakenOverBy(null);
+        setClusterRange(c1, r1.getMin(), (int) split);
+        setClusterRange(c2, (int) split + 1, r1.getMax());
     }
 
     @Override
@@ -220,20 +234,19 @@ public class ConsistentHashSharding extends Sharding {
         int maxHash = invalidCluster.getHashRange().getMax();
 
         // 如果是第一个 Cluster，则将后面的向前扩展；否则令前面的向后扩展
+        // 扩展本身不会修改 Cluster 的 range，
         boolean isFirstCluster = minHash == Integer.MIN_VALUE;
 
         if (isFirstCluster) {
             Cluster secondCluster = clusters.get(1);
-            secondCluster.getHashRange().setMin(Integer.MIN_VALUE);
             invalidCluster.setTakenOverBy(secondCluster);
-            LOG.debug("Expand cluster " + secondCluster.getId() + " left to ring start.");
+            LOG.debug("Cluster " + secondCluster.getId() + " takes over " + invalidCluster.getId());
             return;
         } else {
             for (Cluster cluster : clusters) {
                 if (cluster.getHashRange().getMax() + 1 == minHash) {   // 找到上一个 cluster
-                    cluster.getHashRange().setMax(maxHash);
                     invalidCluster.setTakenOverBy(cluster);
-                    LOG.debug("Expand cluster " + cluster.getId() + " right to " + maxHash);
+                    LOG.debug("Cluster " + cluster.getId() + " takes over " + invalidCluster.getId());
                     return;
                 }
             }

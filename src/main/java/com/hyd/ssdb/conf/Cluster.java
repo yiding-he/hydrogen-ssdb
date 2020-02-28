@@ -4,14 +4,13 @@ import com.hyd.ssdb.SsdbClientException;
 import com.hyd.ssdb.SsdbNoServerAvailableException;
 import com.hyd.ssdb.conn.ServerMonitorDaemon;
 import com.hyd.ssdb.util.Range;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 表示一个集群。集群是负载均衡的基本单位，一个集群里面可以配置一台或多台服务器（{@link Server}）。
@@ -196,13 +195,8 @@ public class Cluster {
      * @param server 要删除的服务器
      */
     public synchronized void removeServer(Server server) {
-        if (masters.contains(server)) {
-            masters.remove(server);
-        }
-
-        if (servers.contains(server)) {
-            servers.remove(server);
-        }
+        masters.remove(server);
+        servers.remove(server);
     }
 
     /**
@@ -274,13 +268,8 @@ public class Cluster {
             this.masters.add(server);
         }
 
-        if (this.invalidServers.contains(server)) {
-            this.invalidServers.remove(server);
-        }
-
-        if (this.invalid) {
-            this.invalid = false;
-        }
+        this.invalidServers.remove(server);
+        this.invalid = false;
     }
 
     /**
@@ -292,14 +281,14 @@ public class Cluster {
      */
     public Cluster getHashHostingCluster(int hash) {
         if (this.hashRange.contains(hash)) {
-            if (this.invalid) {
-                return this.takenOverBy.getHashHostingCluster(hash);
-            } else {
-                return this;
-            }
+            return thisOrTakenOver();
         } else {
             return null;
         }
+    }
+
+    private Cluster thisOrTakenOver() {
+        return this.invalid ? this.takenOverBy.thisOrTakenOver() : this;
     }
 
     @Override
