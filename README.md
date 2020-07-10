@@ -3,6 +3,8 @@ Java 编写的 SSDB 客户端
 
 ## 更新
 
+* 2020-07-10: 版本号更新到 `V1.2.3` 
+    * `SsdbClient` 添加 `zexists()` 方法。
 * 2020-01-06: 版本号更新到 `V1.2.2` 
     * `SsdbClient` 添加 `multiGetBytes()` 方法；
     * `multiSet(List<KeyValue>)` 也支持字节串；

@@ -6,16 +6,9 @@ import com.hyd.ssdb.conf.Sharding;
 import com.hyd.ssdb.conf.SocketConfig;
 import com.hyd.ssdb.protocol.Response;
 import com.hyd.ssdb.sharding.ConsistentHashSharding;
-import com.hyd.ssdb.util.IdScore;
-import com.hyd.ssdb.util.KeyValue;
-import com.hyd.ssdb.util.Num;
-import com.hyd.ssdb.util.Processor;
-import com.hyd.ssdb.util.Str;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import com.hyd.ssdb.util.*;
+
+import java.util.*;
 
 /**
  * 包含连接池的客户端类，对于一个 SSDB 服务器只需要创建一个 SsdbClient 客户端。
@@ -604,6 +597,10 @@ public class SsdbClient extends AbstractClient {
             throw new SsdbException("parameter key is null or blank");
         }
         sendWriteRequest("zdel", key, id);
+    }
+
+    public boolean zexists(String key, String id) {
+        return sendRequest("zexists", key, id).getIntResult() > 0;
     }
 
     public long zincr(String key, String id, long incr) {
