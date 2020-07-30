@@ -207,7 +207,7 @@ public class Cluster {
     public Server getMaster() {
         if (masters.isEmpty()) {
             throw new SsdbNoServerAvailableException(
-                    "Unable to find master server in cluster '" + id + "'");
+                    "No available master in cluster '" + id + "'");
         }
 
         if (masters.size() == 1) {

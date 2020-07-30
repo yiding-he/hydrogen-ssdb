@@ -4,6 +4,8 @@ import com.hyd.ssdb.conn.Connection;
 import com.hyd.ssdb.protocol.Request;
 import com.hyd.ssdb.protocol.Response;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * (description)
@@ -12,6 +14,8 @@ import org.junit.Test;
  * @author Yiding
  */
 public class ConnectionTest {
+
+    private static final Logger LOG = LoggerFactory.getLogger(ConnectionTest.class);
 
     @Test
     public void testReceive2() throws Exception {
@@ -26,5 +30,15 @@ public class ConnectionTest {
         Response response2 = connection.receivePacket();
         System.out.println(response2.getHead().toString());
         System.out.println(response2.getBody());
+    }
+
+    @Test
+    public void testConnectionFail() throws Exception {
+        try {
+            SsdbClient ssdbClient = new SsdbClient("localhost", 999);
+            ssdbClient.set("name", "value");
+        } catch (SsdbException e) {
+            LOG.error("", e);
+        }
     }
 }
