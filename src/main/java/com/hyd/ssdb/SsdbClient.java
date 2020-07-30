@@ -1,9 +1,13 @@
 package com.hyd.ssdb;
 
-import com.hyd.ssdb.conf.*;
+import com.hyd.ssdb.conf.Cluster;
+import com.hyd.ssdb.conf.Server;
+import com.hyd.ssdb.conf.Sharding;
+import com.hyd.ssdb.conf.SocketConfig;
 import com.hyd.ssdb.protocol.Response;
 import com.hyd.ssdb.sharding.ConsistentHashSharding;
 import com.hyd.ssdb.util.*;
+
 import java.util.*;
 
 /**
@@ -107,10 +111,16 @@ public class SsdbClient extends AbstractClient {
      * @return 值
      */
     public byte[] getBytes(String key) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
         return sendRequest("get", key).getBytes();
     }
 
     public void set(String key, Object value) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
         if (value == null) {
             throw new SsdbException("Cannot save null to SSDB");
         }
@@ -119,6 +129,9 @@ public class SsdbClient extends AbstractClient {
     }
 
     public String getset(String key, Object value) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
         if (value == null) {
             throw new SsdbException("Cannot save null to SSDB");
         }
@@ -127,6 +140,9 @@ public class SsdbClient extends AbstractClient {
     }
 
     public void setx(String key, Object value, int ttlSeconds) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
         if (value == null) {
             throw new SsdbException("Cannot save null to SSDB");
         }
@@ -135,6 +151,9 @@ public class SsdbClient extends AbstractClient {
     }
 
     public int setnx(String key, Object value) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
         if (value == null) {
             throw new SsdbException("Cannot save null to SSDB");
         }
@@ -143,10 +162,16 @@ public class SsdbClient extends AbstractClient {
     }
 
     public int expire(String key, int ttlSeconds) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
         return sendWriteRequest("expire", key, ttlSeconds).getIntResult();
     }
 
     public int ttl(String key) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
         return sendRequest("ttl", key).getIntResult();
     }
 
@@ -187,10 +212,16 @@ public class SsdbClient extends AbstractClient {
     }
 
     public long incr(String key, long incr) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
         return sendWriteRequest("incr", key, incr).getLongResult();
     }
 
     public boolean exists(String key) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
         return sendRequest("exists", key).getIntResult() > 0;
     }
 
@@ -201,6 +232,9 @@ public class SsdbClient extends AbstractClient {
     }
 
     public int setbit(String key, long offset) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
         if (offset > Restrictions.MAX_BIT_OFFSET) {
             throw new SsdbException("Offset too large (>" + Restrictions.MAX_BIT_OFFSET + ")");
         }
@@ -209,6 +243,9 @@ public class SsdbClient extends AbstractClient {
     }
 
     public int bitcount(String key, long start, long end) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
         if (start > Restrictions.MAX_BIT_OFFSET) {
             throw new SsdbException("Start offset too large (>" + Restrictions.MAX_BIT_OFFSET + ")");
         }
@@ -219,6 +256,9 @@ public class SsdbClient extends AbstractClient {
     }
 
     public int countbit(String key, long start, long end) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
         if (start > Restrictions.MAX_BIT_OFFSET) {
             throw new SsdbException("Start offset too large (>" + Restrictions.MAX_BIT_OFFSET + ")");
         }
@@ -229,14 +269,23 @@ public class SsdbClient extends AbstractClient {
     }
 
     public String substr(String key, int start, int size) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
         return sendRequest("substr", key, start, size).firstBlock();
     }
 
     public String substr(String key, int start) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
         return sendRequest("substr", key, start).firstBlock();
     }
 
     public int strlen(String key) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
         return sendRequest("strlen", key).getIntResult();
     }
 
@@ -398,18 +447,30 @@ public class SsdbClient extends AbstractClient {
     //////////////////////////////////////////////////////////////// hashmap commands
 
     public void hset(String key, String propName, String propValue) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
         sendWriteRequest("hset", key, propName, propValue);
     }
 
     public String hget(String key, String propName) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
         return sendRequest("hget", key, propName).firstBlock();
     }
 
     public int hdel(String key, String propName) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
         return sendWriteRequest("hdel", key, propName).getIntResult();
     }
 
     public long hincr(String key, String propName) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
         return hincr(key, propName, 1);
     }
 
@@ -422,6 +483,9 @@ public class SsdbClient extends AbstractClient {
     }
 
     public int hsize(String key) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
         return sendRequest("hsize", key).getIntResult();
     }
 
@@ -434,18 +498,30 @@ public class SsdbClient extends AbstractClient {
     }
 
     public List<String> hkeys(String key, String startExclude, String endInclude, int limit) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
         return sendRequest("hkeys", key, startExclude, endInclude, limit).getBlocks();
     }
 
     public List<KeyValue> hgetall(String key) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
         return sendRequest("hgetall", key).getKeyValues();
     }
 
     public Map<String, String> hgetallmap(String key) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
         return sendRequest("hgetall", key).getBlocksAsStringMap(getCharset());
     }
 
     public List<KeyValue> hscan(String key, String startExclude, String endInclude, int limit) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
         return sendRequest("hscan", key, startExclude, endInclude, limit).getKeyValues();
     }
 
@@ -454,10 +530,16 @@ public class SsdbClient extends AbstractClient {
     }
 
     public int hclear(String key) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
         return sendWriteRequest("hclear", key).getIntResult();
     }
 
     public void multiHset(String key, String... props) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
         if (props.length % 2 == 1) {
             throw new SsdbException("Length of props must be odd");
         }
@@ -467,44 +549,78 @@ public class SsdbClient extends AbstractClient {
     }
 
     public void multiHset(String key, List<KeyValue> props) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
         sendWriteRequest((Object[]) prependCommandKeyValue("multi_hset", key, props));
     }
 
     public List<KeyValue> multiHget(String key, String... propNames) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
         return multiHget(key, Arrays.asList(propNames));
     }
 
     public List<KeyValue> multiHget(String key, List<String> propNames) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
         return sendRequest((Object[]) prependCommand("multi_hget", key, propNames)).getKeyValues();
     }
 
     public void multiHdel(String key, String... propNames) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
         sendWriteRequest((Object[]) prependCommand("multi_hdel", key, propNames));
     }
 
     //////////////////////////////////////////////////////////////// sorted set
 
     public void zset(String key, String id, long score) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
         sendWriteRequest("zset", key, id, score);
     }
 
     public Long zget(String key, String id) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
         return sendRequest("zget", key, id).getLongResult();
     }
 
     public void zdel(String key, String id) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
         sendWriteRequest("zdel", key, id);
     }
 
+    public boolean zexists(String key, String id) {
+        return sendRequest("zexists", key, id).getIntResult() > 0;
+    }
+
     public long zincr(String key, String id, long incr) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
         return sendWriteRequest("zincr", key, id, incr).getLongResult();
     }
 
     public int zsize(String key) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
         return sendRequest("zsize", key).getIntResult();
     }
 
     public int zclear(String key) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
         return sendWriteRequest("zclear", key).getIntResult();
     }
 
@@ -512,8 +628,12 @@ public class SsdbClient extends AbstractClient {
         return sendRequest("zlist", startExclude, endInclude, limit).getBlocks();
     }
 
-    public List<String> zkeys(String key, String keyStartExclude, Long scoreStartInclude, Long scoreEndInclude,
-                              int limit) {
+    public List<String> zkeys(
+        String key, String keyStartExclude, Long scoreStartInclude, Long scoreEndInclude, int limit
+    ) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
         return sendRequest("zscan", key,
             Str.ifBlank(keyStartExclude, ""),
             Num.ifNull(scoreStartInclude, ""),
@@ -533,8 +653,12 @@ public class SsdbClient extends AbstractClient {
      *
      * @return 查询结果
      */
-    public List<IdScore> zscan(String key, String keyStartExclude, Long scoreStartInclude, Long scoreEndInclude,
-                               int limit) {
+    public List<IdScore> zscan(
+        String key, String keyStartExclude, Long scoreStartInclude, Long scoreEndInclude, int limit
+    ) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
         return sendRequest("zscan", key,
             Str.ifBlank(keyStartExclude, ""),
             Num.ifNull(scoreStartInclude, ""),
@@ -543,8 +667,12 @@ public class SsdbClient extends AbstractClient {
         ).getIdScores();
     }
 
-    public List<IdScore> zrscan(String key, String keyStartExclude, Long scoreStartInclude, Long scoreEndInclude,
-                                int limit) {
+    public List<IdScore> zrscan(
+        String key, String keyStartExclude, Long scoreStartInclude, Long scoreEndInclude, int limit
+    ) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
         return sendRequest("zrscan", key,
             Str.ifBlank(keyStartExclude, ""),
             Num.ifNull(scoreStartInclude, ""),
@@ -564,19 +692,31 @@ public class SsdbClient extends AbstractClient {
      * @return 排名，如果 id 不在 key 当中则返回 -1
      */
     public int zrank(String key, String id) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
         return sendRequest("zrank", key, id).getIntResult(-1);
     }
 
     // 同上，从大到小排名
     public int zrrank(String key, String id) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
         return sendRequest("zrrank", key, id).getIntResult(-1);
     }
 
     public List<IdScore> zrange(String key, int offset, int limit) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
         return sendRequest("zrange", key, offset, limit).getIdScores();
     }
 
     public List<IdScore> zrrange(String key, int offset, int limit) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
         return sendRequest("zrrange", key, offset, limit).getIdScores();
     }
 
@@ -590,18 +730,27 @@ public class SsdbClient extends AbstractClient {
      * @return score 在 minScoreInclude 与 maxScoreInclude 之间的 id 数量
      */
     public int zcount(String key, int minScoreInclude, int maxScoreInclude) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
         String strMin = minScoreInclude == Integer.MIN_VALUE ? "" : String.valueOf(minScoreInclude);
         String strMax = maxScoreInclude == Integer.MAX_VALUE ? "" : String.valueOf(maxScoreInclude);
         return sendRequest("zcount", key, strMin, strMax).getIntResult(0);
     }
 
     public Long zsum(String key, int minScoreInclude, int maxScoreInclude) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
         String strMin = minScoreInclude == Integer.MIN_VALUE ? "" : String.valueOf(minScoreInclude);
         String strMax = maxScoreInclude == Integer.MAX_VALUE ? "" : String.valueOf(maxScoreInclude);
         return sendRequest("zsum", key, strMin, strMax).getLongResult(0);
     }
 
     public long zavg(String key, int minScoreInclude, int maxScoreInclude) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
         String strMin = minScoreInclude == Integer.MIN_VALUE ? "" : String.valueOf(minScoreInclude);
         String strMax = maxScoreInclude == Integer.MAX_VALUE ? "" : String.valueOf(maxScoreInclude);
         return sendRequest("zavg", key, strMin, strMax).getLongResult(0);
@@ -617,70 +766,118 @@ public class SsdbClient extends AbstractClient {
      * @return 被删除的 id 的数量
      */
     public int zremrangebyrank(String key, int minRankInclude, int maxRankInclude) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
         return sendWriteRequest("zremrangebyrank", key, minRankInclude, maxRankInclude).getIntResult();
     }
 
     public int zremrangebyscore(String key, int minScoreInclude, int maxScoreInclude) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
         String strMin = minScoreInclude == Integer.MIN_VALUE ? "" : String.valueOf(minScoreInclude);
         String strMax = maxScoreInclude == Integer.MAX_VALUE ? "" : String.valueOf(maxScoreInclude);
         return sendWriteRequest("zremrangebyscore", key, strMin, strMax).getIntResult();
     }
 
     public List<IdScore> zpopFront(String key, int limit) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
         return sendWriteRequest("zpop_front", key, limit).getIdScores();
     }
 
     public List<IdScore> zpopBack(String key, int limit) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
         return sendWriteRequest("zpop_back", key, limit).getIdScores();
     }
 
     public long multiZset(String key, IdScore... idScores) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
         return multiZset(key, Arrays.asList(idScores));
     }
 
     public long multiZset(String key, List<IdScore> idScores) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
         return sendWriteRequest((Object[]) prependCommandIdScore("multi_zset", key, idScores)).getLongResult(0);
     }
 
     public List<IdScore> multiZget(String key, List<String> ids) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
         return sendRequest((Object[]) prependCommand("multi_zget", key, ids)).getIdScores();
     }
 
     public List<IdScore> multiZget(String key, String... ids) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
         return multiZget(key, Arrays.asList(ids));
     }
 
     public void multiZdel(String key, List<String> ids) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
         sendWriteRequest((Object[]) prependCommand("multi_zdel", key, ids));
     }
 
     //////////////////////////////////////////////////////////////
 
     public int qpushFront(String key, String... values) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
         return sendWriteRequest((Object[]) prependCommand("qpush_front", key, values)).getIntResult();
     }
 
     public int qpushFront(String key, byte[] bytes) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
         return sendWriteRequest("qpush_front", key, bytes).getIntResult();
     }
 
     public int qpushBack(String key, String... values) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
         return sendWriteRequest((Object[]) prependCommand("qpush_back", key, values)).getIntResult();
     }
 
     public int qpushBack(String key, byte[] bytes) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
         return sendWriteRequest("qpush_back", key, bytes).getIntResult();
     }
 
     public List<String> qpopFront(String key, int size) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
         return sendWriteRequest("qpop_front", key, size).getBlocks();
     }
 
     public List<String> qpopBack(String key, int size) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
         return sendWriteRequest("qpop_back", key, size).getBlocks();
     }
 
     public void qpopAllFront(String key, int batchSize, Processor<String> valueProcessor) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
         while (qsize(key) > 0) {
             List<String> values = qpopFront(key, batchSize);
             for (String value : values) {
@@ -690,6 +887,9 @@ public class SsdbClient extends AbstractClient {
     }
 
     public void qpopAllBack(String key, int batchSize, Processor<String> valueProcessor) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
         while (qsize(key) > 0) {
             List<String> values = qpopBack(key, batchSize);
             for (String value : values) {
@@ -699,46 +899,79 @@ public class SsdbClient extends AbstractClient {
     }
 
     public String qfront(String key) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
         return sendRequest("qfront", key).firstBlock();
     }
 
     public String qback(String key) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
         return sendRequest("qback", key).firstBlock();
     }
 
     public int qsize(String key) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
         return sendRequest("qsize", key).getIntResult();
     }
 
     public void qclear(String key) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
         sendWriteRequest("qclear", key);
     }
 
     public String qget(String key, int index) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
         return sendRequest("qget", key, index).firstBlock();
     }
 
     public byte[] qgetBytes(String key, int index) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
         return sendRequest("qget", key, index).getBytes();
     }
 
     public void qset(String key, int index, String value) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
         sendWriteRequest("qset", key, index, value);
     }
 
     public List<String> qrange(String key, int offset, int limit) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
         return sendRequest("qrange", key, offset, limit).getBlocks();
     }
 
     public List<String> qslice(String key, int startInclude, int endInclude) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
         return sendRequest("qslice", key, startInclude, endInclude).getBlocks();
     }
 
     public int qtrimFront(String key, int size) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
         return sendWriteRequest("qtrim_front", key, size).getIntResult();
     }
 
     public int qtrimBack(String key, int size) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
         return sendWriteRequest("qtrim_back", key, size).getIntResult();
     }
 

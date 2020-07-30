@@ -1,9 +1,10 @@
 package com.hyd.ssdb;
 
 import com.hyd.ssdb.conf.Cluster;
-import java.util.ArrayList;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+
+import java.util.ArrayList;
 
 /**
  * (description)
@@ -18,7 +19,7 @@ public class BaseTest {
     @BeforeClass
     public static void init() {
         String hostStr = System.getProperty("h", "127.0.0.1");
-        String portStr = System.getProperty("p", "8881");
+        String portStr = System.getProperty("p", "8888");
         String passStr = System.getProperty("ps");
 
         if (hostStr.contains(",") && portStr.contains(",")) {

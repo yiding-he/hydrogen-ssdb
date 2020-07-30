@@ -1,10 +1,17 @@
 package com.hyd.ssdb.conn;
 
-import com.hyd.ssdb.*;
-import com.hyd.ssdb.conf.*;
+import com.hyd.ssdb.SsdbClientException;
+import com.hyd.ssdb.SsdbNoClusterAvailableException;
+import com.hyd.ssdb.SsdbNoServerAvailableException;
+import com.hyd.ssdb.SsdbSocketFailedException;
+import com.hyd.ssdb.conf.Cluster;
+import com.hyd.ssdb.conf.Server;
+import com.hyd.ssdb.conf.Sharding;
 import com.hyd.ssdb.protocol.Request;
 import com.hyd.ssdb.protocol.WriteRequest;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -82,7 +89,6 @@ public class ConnectionPoolManager {
                 return new PoolAndConnection(connectionPool, connection);
 
             } catch (SsdbSocketFailedException e) { // 表示 server 连接创建失败
-                LOG.error("Connection failed: ", e);
                 if (connectionPool != null) {
                     Server server = connectionPool.getConnectionFactory().getServer();
                     // 将服务器标记为不可用，这样下次 do-while 循环就会跳过该服务器
@@ -99,13 +105,11 @@ public class ConnectionPoolManager {
                 if (!keepSearching) {
                     throw e;
                 } else {
-                    LOG.error("Connection failed: ", e);
                     retry = true;
                     // 当启用 AutoExpandStrategy 时，下次循环会再次调用 getClusterByKey()
                 }
 
             } catch (SsdbNoClusterAvailableException e) {  // 无法再继续尝试切换 Cluster
-                LOG.error("Connection failed: ", e);
                 throw e;
 
             } catch (Exception e) {

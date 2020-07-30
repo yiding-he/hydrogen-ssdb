@@ -10,11 +10,15 @@ public class Str {
 
     public static String ifBlank(String... values) {
         for (String value : values) {
-            if (value != null && value.trim().length() > 0) {
+            if (!isBlank(value)) {
                 return value;
             }
         }
 
         return "";
+    }
+
+    public static boolean isBlank(String s) {
+        return s == null || s.trim().length() == 0;
     }
 }

@@ -1,16 +1,22 @@
 package com.hyd.ssdb;
 
-import static org.junit.Assert.*;
-
 import com.hyd.ssdb.conf.Server;
 import com.hyd.ssdb.protocol.Request;
 import com.hyd.ssdb.protocol.Response;
-import com.hyd.ssdb.util.*;
+import com.hyd.ssdb.util.Bytes;
+import com.hyd.ssdb.util.IdScore;
+import com.hyd.ssdb.util.KeyValue;
+import com.hyd.ssdb.util.Processor;
+import org.junit.Test;
+
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.junit.Test;
+
+import static org.junit.Assert.*;
 
 /**
  * (description)
@@ -441,6 +447,15 @@ public class SsdbClientTest extends BaseTest {
         assertEquals(1, ssdbClient.zcount("zkey", 100, 200));
         assertEquals(2, ssdbClient.zcount("zkey", 100, 500));
         assertEquals(3, ssdbClient.zcount("zkey", Integer.MIN_VALUE, Integer.MAX_VALUE));
+    }
+
+    @Test
+    public void testZexists() throws Exception {
+        ssdbClient.zclear("zkey");
+        ssdbClient.zset("zkey", "user1", 123);
+
+        assertTrue(ssdbClient.zexists("zkey", "user1"));
+        assertFalse(ssdbClient.zexists("zkey", "user2"));
     }
 
     @Test

@@ -1,10 +1,17 @@
 package com.hyd.ssdb.sharding;
 
-import com.hyd.ssdb.*;
-import com.hyd.ssdb.conf.*;
+import com.hyd.ssdb.SsdbClientException;
+import com.hyd.ssdb.SsdbException;
+import com.hyd.ssdb.SsdbNoClusterAvailableException;
+import com.hyd.ssdb.conf.Cluster;
+import com.hyd.ssdb.conf.SPOFStrategy;
+import com.hyd.ssdb.conf.Sharding;
 import com.hyd.ssdb.util.MD5;
 import com.hyd.ssdb.util.Range;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -227,7 +234,7 @@ public class ConsistentHashSharding extends Sharding {
         }
 
         if (noClusterAvailable()) {
-            throw new SsdbNoClusterAvailableException("No cluster exists");
+            throw new SsdbNoClusterAvailableException();
         }
 
         int minHash = invalidCluster.getHashRange().getMin();
@@ -278,7 +285,7 @@ public class ConsistentHashSharding extends Sharding {
     public Cluster getClusterByKey(String key) {
 
         if (noClusterAvailable()) {
-            throw new SsdbNoClusterAvailableException("NO CLUSTER AVAILABLE");
+            throw new SsdbNoClusterAvailableException();
         }
 
         int hash = MD5.md5Hash(key);
