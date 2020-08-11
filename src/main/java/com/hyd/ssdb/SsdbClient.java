@@ -9,6 +9,7 @@ import com.hyd.ssdb.sharding.ConsistentHashSharding;
 import com.hyd.ssdb.util.*;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * 包含连接池的客户端类，对于一个 SSDB 服务器只需要创建一个 SsdbClient 客户端。
@@ -19,6 +20,8 @@ import java.util.*;
  */
 @SuppressWarnings({"WeakerAccess", "unused", "RedundantCast"})
 public class SsdbClient extends AbstractClient {
+
+    private static final AtomicInteger INSTANCE_COUNTER = new AtomicInteger();
 
     /**
      * 构造方法
@@ -83,6 +86,17 @@ public class SsdbClient extends AbstractClient {
 
     public static SsdbClient fromClusters(List<Cluster> clusters) {
         return new SsdbClient(new ConsistentHashSharding(clusters));
+    }
+
+    //////////////////////////////////////////////////////////////
+
+    {
+        if (INSTANCE_COUNTER.incrementAndGet() > 10) {
+            System.err.println(
+                    "You have been creating too much SsdbClient instances, please check your code! " +
+                    "[https://github.com/yiding-he/hydrogen-ssdb" +
+                    "#%E8%AF%AF%E7%94%A8%E5%AF%BC%E8%87%B4%E5%86%85%E5%AD%98%E5%8D%A0%E7%94%A8%E8%BF%87%E9%AB%98]");
+        }
     }
 
     //////////////////////////////////////////////////////////////
