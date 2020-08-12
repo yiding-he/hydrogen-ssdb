@@ -71,4 +71,12 @@ public class SocketConfig {
     public void setSoBufferSize(int soBufferSize) {
         this.soBufferSize = soBufferSize;
     }
+
+    @Override
+    public String toString() {
+        return "SocketConfig{" +
+            "soTimeout=" + soTimeout +
+            ", soBufferSize=" + soBufferSize +
+            '}';
+    }
 }

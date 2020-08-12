@@ -19,7 +19,7 @@ public class Server {
 
     private boolean master = true;  // 是否是主服务器。
 
-    private GenericObjectPoolConfig<Connection> poolConfig = createDefaultPoolConfig();     // 连接池配置参数
+    private ConnectionPoolConfig poolConfig = createDefaultPoolConfig();     // 连接池配置参数
 
     private SocketConfig socketConfig = new SocketConfig();     // 网络配置参数
 
@@ -90,7 +90,7 @@ public class Server {
     }
 
     public Server(String host, int port, String pass, boolean master,
-                  SocketConfig socketConfig, GenericObjectPoolConfig<Connection> poolConfig) {
+                  SocketConfig socketConfig, ConnectionPoolConfig poolConfig) {
 
         this.host = host;
         this.port = port;
@@ -107,8 +107,8 @@ public class Server {
     }
 
 
-    private GenericObjectPoolConfig<Connection> createDefaultPoolConfig() {
-        GenericObjectPoolConfig<Connection> config = new GenericObjectPoolConfig<>();
+    private ConnectionPoolConfig createDefaultPoolConfig() {
+        ConnectionPoolConfig config = new ConnectionPoolConfig();
         config.setMaxIdle(1);
         return config;
     }
@@ -117,7 +117,7 @@ public class Server {
         return poolConfig;
     }
 
-    public void setPoolConfig(GenericObjectPoolConfig<Connection> poolConfig) {
+    public void setPoolConfig(ConnectionPoolConfig poolConfig) {
         this.poolConfig = poolConfig;
     }
 
