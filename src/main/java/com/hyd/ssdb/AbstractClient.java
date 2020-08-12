@@ -119,7 +119,7 @@ public abstract class AbstractClient {
 
         // 这是一个在失败时重新发送请求的循环。
         // 发送请求会遇到下面几种失败情况，分别有对应的 catch 块：
-        // 1、无法获得 Connection，这时候会遇到 SsdbNoServerAvailableException 异常，直接抛出；
+        // 1、无法获得 Connection，这时候会遇到 SsdbNoServerAvailableException 或 SsdbNoClusterAvailableException，直接抛出；
         // 2、能够获得 Connection，但执行收发时出错，这时候会遇到
         //    SsdbSocketFailedException 异常，需要标记服务器为不可用，并重新尝试循环；
         // 3、执行收发完成，但服务器返回的是错误信息，这时候会遇到 SsdbServerException 异常，直接抛出。
@@ -138,7 +138,7 @@ public abstract class AbstractClient {
 
                 response = sendRequest(request, connection);
                 needResend = false;
-            } catch (SsdbNoServerAvailableException | SsdbServerException e) {
+            } catch (SsdbServerException | SsdbNoServerAvailableException | SsdbNoClusterAvailableException e) {
                 throw e;
             } catch (SsdbClientException e) {
                 LOG.error("Connection error", e);

@@ -184,9 +184,11 @@ public class Server {
     @Override
     public String toString() {
         return "Server{" +
-                "host='" + host + '\'' +
-                ", port=" + port +
-                ", master=" + master +
-                '}';
+            "host='" + host + '\'' +
+            ", port=" + port +
+            ", master=" + master +
+            ", poolConfig=" + poolConfig +
+            ", socketConfig=" + socketConfig +
+            '}';
     }
 }
