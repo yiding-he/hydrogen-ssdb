@@ -114,6 +114,8 @@ public abstract class AbstractClient {
      * @return 执行结果
      */
     public Response sendRequest(Request request) {
+
+        SsdbException.clearThreadLocal();
         boolean needResend;
         Response response = null;
 
@@ -139,6 +141,7 @@ public abstract class AbstractClient {
                 response = sendRequest(request, connection);
                 needResend = false;
             } catch (SsdbServerException | SsdbNoServerAvailableException | SsdbNoClusterAvailableException e) {
+                SsdbException.clearThreadLocal();
                 throw e;
             } catch (SsdbClientException e) {
                 LOG.error("Connection error", e);
@@ -149,8 +152,10 @@ public abstract class AbstractClient {
                 }
                 needResend = true;
             } catch (SsdbException e) {
+                SsdbException.clearThreadLocal();
                 throw e;
             } catch (Exception e) {
+                SsdbException.clearThreadLocal();
                 throw new SsdbException(e);
             } finally {
                 if (connection != null) {

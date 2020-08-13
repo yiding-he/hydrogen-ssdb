@@ -8,6 +8,9 @@ package com.hyd.ssdb;
  */
 public class SsdbException extends RuntimeException {
 
+    /**
+     * 当需要重试时，上次的失败信息暂存在这里。
+     */
     protected static final ThreadLocal<SsdbException> EXCEPTION_HOLDER = new ThreadLocal<>();
 
     private String serverErrorCode;
@@ -33,6 +36,13 @@ public class SsdbException extends RuntimeException {
     }
 
     ////////////////////////////////////////////////////////////////
+
+    /**
+     * 清理可能遗留在 ThreadLocal 中的异常信息
+     */
+    public static void clearThreadLocal() {
+        EXCEPTION_HOLDER.remove();
+    }
 
     public String getServerErrorCode() {
         return serverErrorCode;
