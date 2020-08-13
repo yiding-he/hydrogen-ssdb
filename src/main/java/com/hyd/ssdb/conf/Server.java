@@ -3,6 +3,8 @@ package com.hyd.ssdb.conf;
 import com.hyd.ssdb.conn.Connection;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 
+import java.time.Duration;
+
 /**
  * 对一台具体的 SSDB 服务器的配置，包括地址、端口、校验密码和其他性能配置。
  * created at 15-12-3
@@ -75,6 +77,15 @@ public class Server {
         this.pass = pass;
         this.master = master;
         this.socketConfig.setSoTimeout(timeoutSeconds * 1000);
+        this.poolConfig.setMaxTotal(poolMaxTotal);
+    }
+
+    public Server(String host, int port, String pass, boolean master, Duration timeout, int poolMaxTotal) {
+        this.host = host;
+        this.port = port;
+        this.pass = pass;
+        this.master = master;
+        this.socketConfig.setSoTimeout(Math.toIntExact(timeout.toMillis()));
         this.poolConfig.setMaxTotal(poolMaxTotal);
     }
 
