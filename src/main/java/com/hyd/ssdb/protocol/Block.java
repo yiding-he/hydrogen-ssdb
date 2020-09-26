@@ -1,6 +1,7 @@
 package com.hyd.ssdb.protocol;
 
 import com.hyd.ssdb.util.Bytes;
+
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
@@ -12,7 +13,15 @@ import java.nio.charset.StandardCharsets;
  */
 public class Block {
 
-    private byte[] data;
+    private final byte[] data;
+
+    public Block(Object obj, Charset charset) {
+        if (obj instanceof byte[]) {
+            this.data = (byte[]) obj;
+        } else {
+            this.data = obj.toString().getBytes(charset);
+        }
+    }
 
     public Block(byte[] data) {
         this.data = data;

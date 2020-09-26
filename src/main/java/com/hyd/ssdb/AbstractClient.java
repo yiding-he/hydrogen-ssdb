@@ -272,16 +272,17 @@ public abstract class AbstractClient {
     }
 
     // 将 token1，token2 和 keyValues 组合成一个字符串数组
-    protected String[] prependCommandKeyValue(String token1, String token2, List<KeyValue> keyValues) {
-        String[] command = new String[keyValues.size() * 2 + 2];
+    protected Object[] prependCommandKeyValue(String token1, String token2, List<KeyValue> keyValues) {
+        Object[] command = new Object[keyValues.size() * 2 + 2];
         command[0] = token1;
         command[1] = token2;
 
         for (int i = 0; i < keyValues.size(); i++) {
             KeyValue keyValue = keyValues.get(i);
-            command[i * 2 + 2] = keyValue.getKeyString();
-            command[i * 2 + 3] = keyValue.getValueString();
+            command[i * 2 + 2] = keyValue.getKey();
+            command[i * 2 + 3] = keyValue.getValue();
         }
+
         return command;
     }
 

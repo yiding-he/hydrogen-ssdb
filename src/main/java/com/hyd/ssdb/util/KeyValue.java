@@ -1,6 +1,7 @@
 package com.hyd.ssdb.util;
 
 import com.hyd.ssdb.AbstractClient;
+
 import java.nio.charset.Charset;
 
 /**
@@ -23,8 +24,17 @@ public class KeyValue {
         this.charset = charset;
     }
 
+    public KeyValue(byte[] key, byte[] value) {
+        this.key = key;
+        this.value = value;
+    }
+
     public KeyValue(String key, byte[] value, Charset charset) {
         this((charset == null? key.getBytes(): key.getBytes(charset)), value, charset);
+    }
+
+    public KeyValue(String key, byte[] value) {
+        this(key.getBytes(AbstractClient.DEFAULT_CHARSET), value);
     }
 
     public KeyValue(String key, String value) {
