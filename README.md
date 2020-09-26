@@ -141,6 +141,8 @@ SsdbClient ssdbClient = new SsdbClient(sharding);
 
 ## 更新
 
+* 2020-09-26: 版本号更新到 `V1.2.5`
+    * 修复 `hmultiget` 命令没有正确处理二进制内容的问题
 * 2020-07-10: 版本号更新到 `V1.2.3` 
     * `SsdbClient` 添加 `zexists()` 方法。
 * 2020-01-06: 版本号更新到 `V1.2.2` 
