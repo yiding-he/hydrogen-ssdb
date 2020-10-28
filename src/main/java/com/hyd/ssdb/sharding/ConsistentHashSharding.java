@@ -6,14 +6,16 @@ import com.hyd.ssdb.SsdbNoClusterAvailableException;
 import com.hyd.ssdb.conf.Cluster;
 import com.hyd.ssdb.conf.SPOFStrategy;
 import com.hyd.ssdb.conf.Sharding;
+import com.hyd.ssdb.util.DebugLogger;
 import com.hyd.ssdb.util.MD5;
 import com.hyd.ssdb.util.Range;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * 基于一致性哈希的分片策略。这是 hydrogen-ssdb 实现的缺省分片策略。
@@ -59,12 +61,14 @@ public class ConsistentHashSharding extends Sharding {
         HashMap<String, Range<Integer>> map = new HashMap<String, Range<Integer>>();
         for (Cluster cluster : clusters) {
             map.put(cluster.getId() + "(" + !cluster.isInvalid() + ")",
-                cluster.getHashRange().duplicate());
+                    cluster.getHashRange().duplicate());
         }
         return map;
     }
 
     public void removeCluster(String clusterId) {
+
+        DebugLogger.trace("Removing cluster {}, current clusters: {}", clusterId, clusters);
 
         Cluster cluster = getClusterById(clusterId);
         if (cluster == null) {
@@ -102,6 +106,8 @@ public class ConsistentHashSharding extends Sharding {
      * @param prevCluster 需要被分担负载的 Cluster
      */
     public synchronized void addCluster(Cluster newCluster, Cluster prevCluster) {
+
+        DebugLogger.trace("Adding cluster {} after {}, current clusters: {}", newCluster, prevCluster, clusters);
 
         // check args
         if (clusters.contains(newCluster)) {
@@ -207,6 +213,9 @@ public class ConsistentHashSharding extends Sharding {
 
     @Override
     public synchronized boolean clusterFailed(Cluster invalidCluster) {
+
+        DebugLogger.trace("Cluster {} reporting failure, current clusters: {}", invalidCluster, clusters);
+
         if (invalidCluster == null) {
             return true;
         }
@@ -228,6 +237,9 @@ public class ConsistentHashSharding extends Sharding {
      * @param invalidCluster 已下线的 Cluster
      */
     private synchronized void autoExpand(Cluster invalidCluster) {
+
+        DebugLogger.trace("Auto expanding to failed cluster {}, current clusters: {}",
+            invalidCluster, clusters);
 
         if (!clusters.contains(invalidCluster)) {
             return;

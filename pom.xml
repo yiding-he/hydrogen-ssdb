@@ -6,7 +6,7 @@
 
     <groupId>com.github.yiding-he</groupId>
     <artifactId>hydrogen-ssdb</artifactId>
-    <version>1.2.3</version>
+    <version>1.2.5</version>
     <packaging>jar</packaging>
 
     <name>hydrogen-ssdb</name>
@@ -78,6 +78,7 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
+            <version>4.13.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>

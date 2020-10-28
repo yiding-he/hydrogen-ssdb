@@ -1,14 +1,26 @@
 package com.hyd.ssdb;
 
-import com.hyd.ssdb.conf.*;
-import com.hyd.ssdb.conn.*;
-import com.hyd.ssdb.protocol.*;
+import com.hyd.ssdb.conf.Cluster;
+import com.hyd.ssdb.conf.Server;
+import com.hyd.ssdb.conf.Sharding;
+import com.hyd.ssdb.conn.Connection;
+import com.hyd.ssdb.conn.ConnectionPool;
+import com.hyd.ssdb.conn.ConnectionPoolManager;
+import com.hyd.ssdb.conn.PoolAndConnection;
+import com.hyd.ssdb.protocol.Request;
+import com.hyd.ssdb.protocol.Response;
+import com.hyd.ssdb.protocol.WriteRequest;
 import com.hyd.ssdb.util.IdScore;
 import com.hyd.ssdb.util.KeyValue;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
-import org.slf4j.LoggerFactory;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * 实现 SsdbClient 的一些底层方法
@@ -20,7 +32,7 @@ public abstract class AbstractClient {
 
     public static final Charset DEFAULT_CHARSET = StandardCharsets.UTF_8;
 
-    private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(AbstractClient.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AbstractClient.class);
 
     /**
      * 管理所有的 SSDB 连接
@@ -102,12 +114,14 @@ public abstract class AbstractClient {
      * @return 执行结果
      */
     public Response sendRequest(Request request) {
+
+        SsdbException.clearThreadLocal();
         boolean needResend;
         Response response = null;
 
         // 这是一个在失败时重新发送请求的循环。
         // 发送请求会遇到下面几种失败情况，分别有对应的 catch 块：
-        // 1、无法获得 Connection，这时候会遇到 SsdbNoServerAvailableException 异常，直接抛出；
+        // 1、无法获得 Connection，这时候会遇到 SsdbNoServerAvailableException 或 SsdbNoClusterAvailableException，直接抛出；
         // 2、能够获得 Connection，但执行收发时出错，这时候会遇到
         //    SsdbSocketFailedException 异常，需要标记服务器为不可用，并重新尝试循环；
         // 3、执行收发完成，但服务器返回的是错误信息，这时候会遇到 SsdbServerException 异常，直接抛出。
@@ -126,7 +140,8 @@ public abstract class AbstractClient {
 
                 response = sendRequest(request, connection);
                 needResend = false;
-            } catch (SsdbNoServerAvailableException | SsdbServerException e) {
+            } catch (SsdbServerException | SsdbNoServerAvailableException | SsdbNoClusterAvailableException e) {
+                SsdbException.clearThreadLocal();
                 throw e;
             } catch (SsdbClientException e) {
                 LOG.error("Connection error", e);
@@ -137,8 +152,10 @@ public abstract class AbstractClient {
                 }
                 needResend = true;
             } catch (SsdbException e) {
+                SsdbException.clearThreadLocal();
                 throw e;
             } catch (Exception e) {
+                SsdbException.clearThreadLocal();
                 throw new SsdbException(e);
             } finally {
                 if (connection != null) {
@@ -255,16 +272,17 @@ public abstract class AbstractClient {
     }
 
     // 将 token1，token2 和 keyValues 组合成一个字符串数组
-    protected String[] prependCommandKeyValue(String token1, String token2, List<KeyValue> keyValues) {
-        String[] command = new String[keyValues.size() * 2 + 2];
+    protected Object[] prependCommandKeyValue(String token1, String token2, List<KeyValue> keyValues) {
+        Object[] command = new Object[keyValues.size() * 2 + 2];
         command[0] = token1;
         command[1] = token2;
 
         for (int i = 0; i < keyValues.size(); i++) {
             KeyValue keyValue = keyValues.get(i);
-            command[i * 2 + 2] = keyValue.getKeyString();
-            command[i * 2 + 3] = keyValue.getValueString();
+            command[i * 2 + 2] = keyValue.getKey();
+            command[i * 2 + 3] = keyValue.getValue();
         }
+
         return command;
     }
 

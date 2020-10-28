@@ -3,6 +3,8 @@ package com.hyd.ssdb.conf;
 import com.hyd.ssdb.conn.Connection;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 
+import java.time.Duration;
+
 /**
  * 对一台具体的 SSDB 服务器的配置，包括地址、端口、校验密码和其他性能配置。
  * created at 15-12-3
@@ -19,7 +21,7 @@ public class Server {
 
     private boolean master = true;  // 是否是主服务器。
 
-    private GenericObjectPoolConfig<Connection> poolConfig = createDefaultPoolConfig();     // 连接池配置参数
+    private ConnectionPoolConfig poolConfig = createDefaultPoolConfig();     // 连接池配置参数
 
     private SocketConfig socketConfig = new SocketConfig();     // 网络配置参数
 
@@ -78,6 +80,15 @@ public class Server {
         this.poolConfig.setMaxTotal(poolMaxTotal);
     }
 
+    public Server(String host, int port, String pass, boolean master, Duration timeout, int poolMaxTotal) {
+        this.host = host;
+        this.port = port;
+        this.pass = pass;
+        this.master = master;
+        this.socketConfig.setSoTimeout(Math.toIntExact(timeout.toMillis()));
+        this.poolConfig.setMaxTotal(poolMaxTotal);
+    }
+
     public Server(String host, int port, String pass, boolean master, SocketConfig socketConfig) {
         this.host = host;
         this.port = port;
@@ -90,7 +101,7 @@ public class Server {
     }
 
     public Server(String host, int port, String pass, boolean master,
-                  SocketConfig socketConfig, GenericObjectPoolConfig<Connection> poolConfig) {
+                  SocketConfig socketConfig, ConnectionPoolConfig poolConfig) {
 
         this.host = host;
         this.port = port;
@@ -107,8 +118,8 @@ public class Server {
     }
 
 
-    private GenericObjectPoolConfig<Connection> createDefaultPoolConfig() {
-        GenericObjectPoolConfig<Connection> config = new GenericObjectPoolConfig<>();
+    private ConnectionPoolConfig createDefaultPoolConfig() {
+        ConnectionPoolConfig config = new ConnectionPoolConfig();
         config.setMaxIdle(1);
         return config;
     }
@@ -117,7 +128,7 @@ public class Server {
         return poolConfig;
     }
 
-    public void setPoolConfig(GenericObjectPoolConfig<Connection> poolConfig) {
+    public void setPoolConfig(ConnectionPoolConfig poolConfig) {
         this.poolConfig = poolConfig;
     }
 
@@ -184,9 +195,11 @@ public class Server {
     @Override
     public String toString() {
         return "Server{" +
-                "host='" + host + '\'' +
-                ", port=" + port +
-                ", master=" + master +
-                '}';
+            "host='" + host + '\'' +
+            ", port=" + port +
+            ", master=" + master +
+            ", poolConfig=" + poolConfig +
+            ", socketConfig=" + socketConfig +
+            '}';
     }
 }

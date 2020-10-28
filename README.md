@@ -1,23 +1,16 @@
 # hydrogen-ssdb
-Java 编写的 SSDB 客户端
+Java 编写的 SSDB 客户端。
 
-## 更新
+## 交流
 
-* 2020-07-10: 版本号更新到 `V1.2.3` 
-    * `SsdbClient` 添加 `zexists()` 方法。
-* 2020-01-06: 版本号更新到 `V1.2.2` 
-    * `SsdbClient` 添加 `multiGetBytes()` 方法；
-    * `multiSet(List<KeyValue>)` 也支持字节串；
-    * 修复构造方法中超时时间单位错误的问题。
-* 2019-12-31: 版本号更新到 `V1.2.1` KeyValue 的内容类型改为 byte[] 以便处理 SSDB 中的二进制内容。
-* 2019-10-01: 版本 `V1.2.0` 正式发布到 Maven 中心库。
-* 2019-08-06: 版本号更新到 `V1.2.0` 修复了没有 auth 认证的问题
-* 2019-03-27: 版本号更新到 `V1.1.2` 修复了运行过程中添加第二个 Cluster 失败的问题，以及自动扩展哈希段的问题
-* 2019-02-06: 版本号更新到 `V1.1.1` 修复了 `multiGet()` 方法在多服务器环境下返回错误结果的问题。
-* 2018-05-06: 修复了从节点恢复时没有被认作是从节点的问题。
-* 2018-02-25: 版本号更新到 `V1.1.0`，添加了 `multiGet()` 方法，修复了若干方法在多服务器负载均衡上的 BUG。
-* 2017-08-03: 修复了 Cluster 无法恢复的问题，版本号更新到 1.0.1。
-* 2017-06-13: 完成了最后一个基本特性的实现，版本号正式改为 1.0.0。
+为了更快速的解决 issue，所以建立了一个 QQ 群。
+
+![hydrogen-ssdb群二维码](https://user-images.githubusercontent.com/900606/88889218-5efd8880-d272-11ea-9691-1f5bd80a4fc6.png)
+
+```
+群名称：hydrogen-ssdb
+群号：1148460774
+```
 
 ## 介绍
 
@@ -136,61 +129,6 @@ SsdbClient ssdbClient = new SsdbClient(sharding);
 
 ```
 
-#### Spring XML 配置
-
-```XML
-<!-- 单个 SSDB 服务器的配置，其他几个类似的构造方法在此略去 -->
-<bean id="singleServerSsdbClient" class="com.hyd.ssdb.SsdbClient" destroy-method="close">
-    <constructor-arg name="host" value="192.168.1.180"/>
-    <constructor-arg name="port" value="8888"/>
-</bean>
-
-<!-- 自定义 Sharding -->
-<bean id="custShardingClient" class="com.hyd.ssdb.SsdbClient" destroy-method="close">
-    <constructor-arg name="sharding">
-        <bean class="com.hyd.ssdb.AjiaSharding"/>
-    </constructor-arg>
-</bean>
-
-<!-- 多台 SSDB 主从服务器的配置 -->
-<bean id="ssdbServer1" class="com.hyd.ssdb.conf.Server">
-    <property name="host" value="192.168.1.180"/>
-    <property name="port" value="8888"/>
-    <property name="master" value="true"/>
-</bean>
-<bean id="ssdbServer2" class="com.hyd.ssdb.conf.Server">
-    <property name="host" value="192.168.1.180"/>
-    <property name="port" value="8889"/>
-    <property name="master" value="false"/>
-</bean>
-<bean id="singleClusterSsdbClient" class="com.hyd.ssdb.SsdbClient"
-      factory-method="fromSingleCluster" destroy-method="close">
-    <constructor-arg name="servers">
-        <list value-type="com.hyd.ssdb.conf.Server">
-            <ref bean="ssdbServer1"/>
-            <ref bean="ssdbServer2"/>
-        </list>
-    </constructor-arg>
-</bean>
-
-<!-- 多台 SSDB 负载均衡的配置（每个 Cluster 一台服务器） -->
-<bean id="ssdbCluster1" class="com.hyd.ssdb.conf.Cluster" factory-method="fromSingleServer">
-    <constructor-arg name="server" ref="ssdbServer1"/>
-</bean>
-<bean id="ssdbCluster2" class="com.hyd.ssdb.conf.Cluster" factory-method="fromSingleServer">
-    <constructor-arg name="server" ref="ssdbServer2"/>
-</bean>
-<bean id="shardingSsdbClient" class="com.hyd.ssdb.SsdbClient"
-      factory-method="fromClusters" destroy-method="close">
-    <constructor-arg name="clusters">
-        <list value-type="com.hyd.ssdb.conf.Cluster">
-            <ref bean="ssdbCluster1"/>
-            <ref bean="ssdbCluster2"/>
-        </list>
-    </constructor-arg>
-</bean>
-```
-
 ### 使用注意
 
 #### 线程安全
@@ -200,6 +138,26 @@ SsdbClient ssdbClient = new SsdbClient(sharding);
 #### 误用导致内存占用过高
 
 因为一个 `SsdbClient` 对象可能包含一个或多个连接池（每个连接池对应一个 SSDB 服务器），因此请不要创建大量的 `SsdbClient` 对象，这样完全没有必要，也会使得内存很容易被用光。
+
+## 更新
+
+* 2020-09-26: 版本号更新到 `V1.2.5`
+    * 修复 `hmultiget` 命令没有正确处理二进制内容的问题
+* 2020-07-10: 版本号更新到 `V1.2.3` 
+    * `SsdbClient` 添加 `zexists()` 方法。
+* 2020-01-06: 版本号更新到 `V1.2.2` 
+    * `SsdbClient` 添加 `multiGetBytes()` 方法；
+    * `multiSet(List<KeyValue>)` 也支持字节串；
+    * 修复构造方法中超时时间单位错误的问题。
+* 2019-12-31: 版本号更新到 `V1.2.1` KeyValue 的内容类型改为 byte[] 以便处理 SSDB 中的二进制内容。
+* 2019-10-01: 版本 `V1.2.0` 正式发布到 Maven 中心库。
+* 2019-08-06: 版本号更新到 `V1.2.0` 修复了没有 auth 认证的问题
+* 2019-03-27: 版本号更新到 `V1.1.2` 修复了运行过程中添加第二个 Cluster 失败的问题，以及自动扩展哈希段的问题
+* 2019-02-06: 版本号更新到 `V1.1.1` 修复了 `multiGet()` 方法在多服务器环境下返回错误结果的问题。
+* 2018-05-06: 修复了从节点恢复时没有被认作是从节点的问题。
+* 2018-02-25: 版本号更新到 `V1.1.0`，添加了 `multiGet()` 方法，修复了若干方法在多服务器负载均衡上的 BUG。
+* 2017-08-03: 修复了 Cluster 无法恢复的问题，版本号更新到 1.0.1。
+* 2017-06-13: 完成了最后一个基本特性的实现，版本号正式改为 1.0.0。
 
 
 

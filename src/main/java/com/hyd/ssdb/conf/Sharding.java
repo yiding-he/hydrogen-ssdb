@@ -1,6 +1,8 @@
 package com.hyd.ssdb.conf;
 
 import com.hyd.ssdb.SsdbClientException;
+import com.hyd.ssdb.util.DebugLogger;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -40,7 +42,9 @@ public abstract class Sharding {
             throw new SsdbClientException("clusters is empty");
         }
 
-        this.clusters = new ArrayList<Cluster>(clusters);
+        this.clusters = new ArrayList<>(clusters);
+
+        DebugLogger.trace("{} created with cluster {}", getClass().getSimpleName(), this.clusters);
     }
 
     //////////////////////////////////////////////////////////////

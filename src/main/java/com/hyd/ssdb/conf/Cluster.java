@@ -3,14 +3,16 @@ package com.hyd.ssdb.conf;
 import com.hyd.ssdb.SsdbClientException;
 import com.hyd.ssdb.SsdbNoServerAvailableException;
 import com.hyd.ssdb.conn.ServerMonitorDaemon;
+import com.hyd.ssdb.util.DebugLogger;
 import com.hyd.ssdb.util.Range;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * 表示一个集群。集群是负载均衡的基本单位，一个集群里面可以配置一台或多台服务器（{@link Server}）。
@@ -186,6 +188,9 @@ public class Cluster {
             if (server.isMaster() && !masters.contains(server)) {
                 masters.add(server);
             }
+
+            DebugLogger.trace("Server {} added to cluster {}, current servers: {}, current masters: {}",
+                server, id, servers, masters);
         }
     }
 
@@ -197,6 +202,9 @@ public class Cluster {
     public synchronized void removeServer(Server server) {
         masters.remove(server);
         servers.remove(server);
+
+        DebugLogger.trace("Server {} removed from cluster {}, current servers: {}, current masters: {}",
+            server, id, servers, masters);
     }
 
     /**
@@ -252,6 +260,10 @@ public class Cluster {
             this.invalidServers.add(invalid);
         }
 
+        DebugLogger.trace("Server {} marked invalid and removed from cluster {}, " +
+                "current servers: {}, current masters: {}",
+            invalid, id, servers, masters);
+
         ServerMonitorDaemon.addInvalidServer(invalid, this);
     }
 
@@ -270,6 +282,10 @@ public class Cluster {
 
         this.invalidServers.remove(server);
         this.invalid = false;
+
+        DebugLogger.trace("Server {} marked valid and restored from cluster {}, " +
+                "current servers: {}, current masters: {}",
+            server, id, servers, masters);
     }
 
     /**
@@ -294,9 +310,15 @@ public class Cluster {
     @Override
     public String toString() {
         return "Cluster{" +
-                "id='" + id + '\'' +
-                ", weight=" + weight +
-                '}';
+            "id='" + id + '\'' +
+            ", invalid=" + invalid +
+            ", servers=" + servers +
+            ", masters=" + masters +
+            ", invalidServers=" + invalidServers +
+            ", weight=" + weight +
+            ", hashRange=" + hashRange +
+            ", takenOverBy=" + takenOverBy +
+            '}';
     }
 
     /**

@@ -4,6 +4,7 @@ import com.hyd.ssdb.AbstractClient;
 import com.hyd.ssdb.SsdbException;
 import com.hyd.ssdb.conf.Server;
 import com.hyd.ssdb.util.Bytes;
+
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,7 +23,7 @@ public class Request {
 
     private Server forceServer;     // 强制指定请求的发送地址
 
-    private final List<Block> blocks = new ArrayList<Block>();
+    private final List<Block> blocks = new ArrayList<>();
 
     public Request(String command) {
         String[] tokens = command.split("\\s+");
@@ -60,17 +61,9 @@ public class Request {
             throw new SsdbException("Command '" + tokens[0] + "' has no parameters or not supported.");
         }
 
-        this.header = new Block(tokens[0].toString().getBytes(charset));
-
+        this.header = new Block(tokens[0], charset);
         for (int i = 1; i < tokens.length; i++) {
-            Object token = tokens[i];
-            Block block;
-            if (token instanceof byte[]) {
-                block = new Block((byte[]) token);
-            } else {
-                block = new Block(token.toString().getBytes(charset));
-            }
-            this.blocks.add(block);
+            this.blocks.add(new Block(tokens[i], charset));
         }
     }
 

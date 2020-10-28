@@ -1,5 +1,7 @@
 package com.hyd.ssdb.conf;
 
+import java.time.Duration;
+
 /**
  * Socket 配置 created at 15-12-3
  *
@@ -28,6 +30,11 @@ public class SocketConfig {
 
     public SocketConfig(int soTimeout) {
         this.soTimeout = soTimeout;
+    }
+
+    public SocketConfig(Duration duration, int soBufferSize) {
+        this.soTimeout = Math.toIntExact(duration.toMillis());
+        this.soBufferSize = soBufferSize;
     }
 
     public SocketConfig(int soTimeout, int soBufferSize) {
@@ -70,5 +77,13 @@ public class SocketConfig {
      */
     public void setSoBufferSize(int soBufferSize) {
         this.soBufferSize = soBufferSize;
+    }
+
+    @Override
+    public String toString() {
+        return "SocketConfig{" +
+            "soTimeout=" + soTimeout +
+            ", soBufferSize=" + soBufferSize +
+            '}';
     }
 }
