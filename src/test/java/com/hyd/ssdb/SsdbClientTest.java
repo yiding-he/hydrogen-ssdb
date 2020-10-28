@@ -11,6 +11,8 @@ import org.junit.Test;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -557,5 +559,22 @@ public class SsdbClientTest extends BaseTest {
 
         // zrscan
         assertEquals(1, ssdbClient.zrscan("zkey", "b", null, null, 10).size());
+    }
+
+    @Test
+    public void testQpushbackBytes() throws Exception {
+        // 初始化
+        String key = "qpushBack";
+        ssdbClient.qclear(key);
+        assertEquals(0, ssdbClient.qsize(key));
+
+        // 读取文件并保存到SSDB
+        byte[] content = Files.readAllBytes(Paths.get("src/test/resources/sample.jpg"));
+        ssdbClient.qpushBack(key, content);
+        assertEquals(1, ssdbClient.qsize(key));
+
+        // 从 SSDB 读取出来
+        byte[] bytes = ssdbClient.qgetBytes(key, 0);
+        assertEquals(content.length, bytes.length);
     }
 }

@@ -118,7 +118,7 @@ public class Server {
     }
 
 
-    private ConnectionPoolConfig createDefaultPoolConfig() {
+    public static ConnectionPoolConfig createDefaultPoolConfig() {
         ConnectionPoolConfig config = new ConnectionPoolConfig();
         config.setMaxIdle(1);
         return config;
