@@ -6,11 +6,11 @@ import com.hyd.ssdb.protocol.Response;
 import com.hyd.ssdb.util.Bytes;
 import com.hyd.ssdb.util.IdScore;
 import com.hyd.ssdb.util.KeyValue;
-import com.hyd.ssdb.util.Processor;
 import org.junit.Test;
 
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -26,13 +26,28 @@ import static org.junit.Assert.*;
  */
 public class SsdbClientTest extends BaseTest {
 
+    private static final byte[] SAMPLE_BINARY_DATA;
+
+    static {
+        try {
+            SAMPLE_BINARY_DATA = Files.readAllBytes(
+                Paths.get("src/test/resources/binary/sample.jpg")
+            );
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+
     ////////////////////////////////////////////////////////////////
 
     @Test
-    public void testSendRequest() throws Exception {
+    public void testSendRequest() {
+        ssdbClient.del("name");
+        ssdbClient.set("name", "hydrogen-ssdb");
         Response response = ssdbClient.sendRequest(new Request("get name"));
-        System.out.println(response.getHead());
-        System.out.println(response.getBlocks());
+        assertEquals("ok", response.getHead().toString());
+        assertEquals("hydrogen-ssdb", response.firstBlock());
     }
 
     @Test
@@ -43,27 +58,20 @@ public class SsdbClientTest extends BaseTest {
     }
 
     @Test
-    public void testMultiGetBytes() throws Exception {
-        Charset charset = StandardCharsets.UTF_16;
+    public void testMultiGetBytes() {
+        String key = "sample-binary-data";
 
-        byte[] hello1 = "你好".getBytes(charset);
-        System.out.println("Bytes: " + Arrays.toString(hello1));
+        ssdbClient.multiSet(Collections.singletonList(
+            new KeyValue(key, SAMPLE_BINARY_DATA)
+        ));
 
-        KeyValue keyValue = new KeyValue("hello1", hello1, null);
-        System.out.println("KeyValue: " + Arrays.toString(keyValue.getValue()));
-        ssdbClient.multiSet(Collections.singletonList(keyValue));
-
-        byte[] hello1_ = ssdbClient.getBytes("hello1");
-        System.out.println("GetBytes: " + Arrays.toString(hello1_));
-
-        List<byte[]> bytesList = ssdbClient.multiGetBytes("hello1");
-        System.out.println("MultiGetBytes: " + Arrays.toString(bytesList.get(0)));
-
-        assertEquals("你好", new String(bytesList.get(0), charset));
+        List<byte[]> bytes = ssdbClient.multiGetBytes(key);
+        assertEquals(1, bytes.size());
+        assertArrayEquals(SAMPLE_BINARY_DATA, bytes.get(0));
     }
 
     @Test
-    public void testMultiGetBytes2() throws Exception {
+    public void testMultiGetBytes2() {
         byte[] bytes = {-1, -2, -3, -4, -5};
 
         KeyValue keyValue = new KeyValue("bytes", bytes, null);
@@ -75,27 +83,27 @@ public class SsdbClientTest extends BaseTest {
     }
 
     @Test
-    public void testDbsize() throws Exception {
+    public void testDbsize() {
         Server server = ssdbClient.getSharding().getClusters().get(0).getServers().get(0);
-        System.out.println("dbsize of " + server + ": " + ssdbClient.dbsize(server));
+        assertTrue(ssdbClient.dbsize(server) > 0);
     }
 
     @Test
-    public void testInfo() throws Exception {
+    public void testInfo() {
         Server server = ssdbClient.getSharding().getClusters().get(0).getServers().get(0);
         System.out.println("info of " + server + ": " + ssdbClient.info(server));
     }
 
     @Test
-    public void testSetStringWithReturn() throws Exception {
+    public void testSetStringWithCrlf() {
         String key = "str_with_return";
-        ssdbClient.set(key, "123\n\r\t456");
-        System.out.println(ssdbClient.get(key)
-                .replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t"));
+        String value = "123\n\r\t456";
+        ssdbClient.set(key, value);
+        assertEquals(value, ssdbClient.get(key));
     }
 
     @Test
-    public void testSetGet() throws Exception {
+    public void testSetGet() {
         ssdbClient.set("name", "111");
         assertEquals("111", ssdbClient.get("name"));
 
@@ -104,7 +112,7 @@ public class SsdbClientTest extends BaseTest {
     }
 
     @Test
-    public void testSetnx() throws Exception {
+    public void testSetnx() {
         String key = "key" + System.currentTimeMillis();
         assertEquals(1, ssdbClient.setnx(key, "1"));     // 第一次设置成功
         assertEquals(0, ssdbClient.setnx(key, "1"));     // 因为值已经存在，第二次设置失败
@@ -121,27 +129,31 @@ public class SsdbClientTest extends BaseTest {
     }
 
     @Test
-    public void testExpireCommand() throws Exception {
+    public void testExpireCommand() {
         System.out.println(ssdbClient.expire("invalid_key", 10));
     }
 
     @Test
-    public void testHexists() throws Exception {
+    public void testHexists() {
         ssdbClient.hset("hname", "prop", "value");
         assertTrue(ssdbClient.hexists("hname", "prop"));
     }
 
     @Test
-    public void testTtl() throws Exception {
-        ssdbClient.set("name", "ssdb");
-        System.out.println(ssdbClient.ttl("name"));
-        ssdbClient.expire("name", 120);
-        System.out.println(ssdbClient.ttl("name"));
-        System.out.println(ssdbClient.ttl("_key_not_exists_"));
+    public void testTtl() {
+        String key = "///TTL-TEST-KEY";
+        ssdbClient.del(key);
+        ssdbClient.set(key, "ssdb");
+        assertEquals(-1, ssdbClient.ttl(key));
+        assertEquals(-1, ssdbClient.ttl("__key__not__exists__"));
+
+        ssdbClient.expire(key, 120);
+        assertTrue(ssdbClient.ttl(key) <= 120);
+        assertTrue(ssdbClient.ttl(key) > 0);
     }
 
     @Test
-    public void testQbytes() throws Exception {
+    public void testQbytes() {
         ssdbClient.qclear("queue");
         ssdbClient.qpushFront("queue", "123");
         System.out.println(ssdbClient.qget("queue", 0));
@@ -158,33 +170,33 @@ public class SsdbClientTest extends BaseTest {
     }
 
     @Test
-    public void testGetSet() throws Exception {
+    public void testGetSet() {
         ssdbClient.set("key", "old_value");
         assertEquals("old_value", ssdbClient.getset("key", "new_value"));
         assertEquals("new_value", ssdbClient.get("key"));
     }
 
     @Test
-    public void testSetGetBytes() throws Exception {
+    public void testSetGetBytes() {
         ssdbClient.set("bytes", new byte[]{50, 51, 52, 62});
         System.out.println(Bytes.toString(ssdbClient.getBytes("bytes")));
     }
 
     @Test
-    public void testQpushFrontBytes() throws Exception {
+    public void testQpushFrontBytes() {
         ssdbClient.qclear("queue");
         ssdbClient.qpushFront("queue", new byte[]{50, 51, 52, 62});
         System.out.println(Arrays.toString(ssdbClient.qgetBytes("queue", 0)));
     }
 
     @Test
-    public void testIncr() throws Exception {
+    public void testIncr() {
         ssdbClient.set("counter", 123);
         assertEquals(223, ssdbClient.incr("counter", 100));
     }
 
     @Test
-    public void testDelExists() throws Exception {
+    public void testDelExists() {
         ssdbClient.set("name1", 123);
         assertTrue(ssdbClient.exists("name1"));
         ssdbClient.set("name2", 456);
@@ -197,7 +209,7 @@ public class SsdbClientTest extends BaseTest {
     }
 
     @Test
-    public void testDelExists2() throws Exception {
+    public void testDelExists2() {
         ssdbClient.set("name1", 123);
         assertTrue(ssdbClient.exists("name1"));
         ssdbClient.set("name2", 456);
@@ -209,8 +221,9 @@ public class SsdbClientTest extends BaseTest {
         assertFalse(ssdbClient.exists("name2"));
     }
 
+    @SuppressWarnings("StringConcatenationInLoop")
     @Test
-    public void testGetbit() throws Exception {
+    public void testGetbit() {
         ssdbClient.set("bitkey", "1");  // 0011 0001
 
         String str = "";
@@ -228,21 +241,21 @@ public class SsdbClientTest extends BaseTest {
     }
 
     @Test
-    public void testGetByte() throws Exception {
+    public void testGetByte() {
         byte[] bytes = {-1, -2, -3, -4, -5};
         ssdbClient.set("bytes", bytes);
         assertArrayEquals(bytes, ssdbClient.getBytes("bytes"));
     }
 
     @Test
-    public void testSubStr() throws Exception {
+    public void testSubStr() {
         ssdbClient.set("key", "hello, everyone");
         assertEquals("every", ssdbClient.substr("key", 7, 5));
         assertEquals("one", ssdbClient.substr("key", -3));
     }
 
     @Test
-    public void testStrLen() throws Exception {
+    public void testStrLen() {
         String str = "hello, everyone";
         ssdbClient.set("key", str);
         assertEquals(str.length(), ssdbClient.strlen("key"));
@@ -250,7 +263,7 @@ public class SsdbClientTest extends BaseTest {
     }
 
     @Test
-    public void testKeys() throws Exception {
+    public void testKeys() {
         ssdbClient.set("_key0", 0);
         ssdbClient.set("_key1", 1);
         ssdbClient.set("_key2", 2);
@@ -266,7 +279,7 @@ public class SsdbClientTest extends BaseTest {
     }
 
     @Test
-    public void testRkeys() throws Exception {
+    public void testRkeys() {
         ssdbClient.set("_key0", 0);
         ssdbClient.set("_key1", 1);
         ssdbClient.set("_key2", 2);
@@ -282,7 +295,7 @@ public class SsdbClientTest extends BaseTest {
     }
 
     @Test
-    public void testScan() throws Exception {
+    public void testScan() {
         ssdbClient.set("_key0", 0);
         ssdbClient.set("_key1", 1);
         ssdbClient.set("_key2", 2);
@@ -297,7 +310,7 @@ public class SsdbClientTest extends BaseTest {
     }
 
     @Test
-    public void testScanAllKeys() throws Exception {
+    public void testScanAllKeys() {
         List<KeyValue> keyValues = ssdbClient.scan("", "", 100);
         for (KeyValue keyValue : keyValues) {
             System.out.println(keyValue);
@@ -305,23 +318,20 @@ public class SsdbClientTest extends BaseTest {
     }
 
     @Test
-    public void testScanWithProcessor() throws Exception {
+    public void testScanWithProcessor() {
         String prefix = "ScoreValue:431200_BIG_UNION_2016:range:Examno:705130040:target:Quest";
         final AtomicInteger counter = new AtomicInteger();
 
-        ssdbClient.scan(prefix, 100, new Processor<KeyValue>() {
-            @Override
-            public void process(KeyValue keyValue) {
-                if (counter.incrementAndGet() > 1000) {
-                    throw new RuntimeException("STOP");
-                }
-                System.out.println(keyValue);
+        ssdbClient.scan(prefix, 100, keyValue -> {
+            if (counter.incrementAndGet() > 1000) {
+                throw new RuntimeException("STOP");
             }
+            System.out.println(keyValue);
         });
     }
 
     @Test
-    public void testMultiSet() throws Exception {
+    public void testMultiSet() {
         ssdbClient.del("__key1", "__key2", "__key3");
 
         List<KeyValue> keyValues = Arrays.asList(
@@ -338,7 +348,7 @@ public class SsdbClientTest extends BaseTest {
     }
 
     @Test
-    public void testMultiSet2() throws Exception {
+    public void testMultiSet2() {
         ssdbClient.del("__key4", "__key5", "__key6");
         ssdbClient.multiSet("__key4", "value4", "__key5", "value5", "__key6", "value6");
 
@@ -348,7 +358,7 @@ public class SsdbClientTest extends BaseTest {
     }
 
     @Test
-    public void testHashMap() throws Exception {
+    public void testHashMap() {
         String key = "multiKey";
         ssdbClient.del(key);
         ssdbClient.hset(key, "prop1", "value1");
@@ -359,7 +369,7 @@ public class SsdbClientTest extends BaseTest {
     }
 
     @Test
-    public void testMultiHset() throws Exception {
+    public void testMultiHset() {
         String key = "multiKey";
         ssdbClient.del(key);
         ssdbClient.multiHset(key, "prop1", "value1", "prop2", "value2");
@@ -372,7 +382,7 @@ public class SsdbClientTest extends BaseTest {
     }
 
     @Test
-    public void testZsetgetdelsize() throws Exception {
+    public void testZsetgetdelsize() {
         ssdbClient.zclear("zkey");
         ssdbClient.zset("zkey", "user1", 123);
         ssdbClient.zset("zkey", "user2", 456);
@@ -382,7 +392,7 @@ public class SsdbClientTest extends BaseTest {
     }
 
     @Test
-    public void testMultiZget() throws Exception {
+    public void testMultiZget() {
         ssdbClient.zclear("zkey");
         long setCount = ssdbClient.multiZset("zkey", Arrays.asList(
                 new IdScore("user1", -1),
@@ -397,7 +407,7 @@ public class SsdbClientTest extends BaseTest {
     }
 
     @Test
-    public void testZsetMinusValue() throws Exception {
+    public void testZsetMinusValue() {
         ssdbClient.zclear("zkey");
         ssdbClient.zset("zkey", "user1", -1);
         assertEquals(new Long(-1), ssdbClient.zget("zkey", "user1"));
@@ -406,14 +416,14 @@ public class SsdbClientTest extends BaseTest {
     }
 
     @Test
-    public void testZlist() throws Exception {
+    public void testZlist() {
         ssdbClient.zset("zkey:1", "user1", 123);
         List<String> keys = ssdbClient.zlist("zkey:", "", 100);
         assertTrue(keys.contains("zkey:1"));
     }
 
     @Test
-    public void testZrank() throws Exception {
+    public void testZrank() {
         ssdbClient.zclear("zkey");
         ssdbClient.zset("zkey", "user1", 123);
         ssdbClient.zset("zkey", "user2", 456);
@@ -425,7 +435,7 @@ public class SsdbClientTest extends BaseTest {
     }
 
     @Test
-    public void testZrange() throws Exception {
+    public void testZrange() {
         ssdbClient.zclear("zkey");
         ssdbClient.zset("zkey", "user1", 123);
         ssdbClient.zset("zkey", "user2", 456);
@@ -438,7 +448,7 @@ public class SsdbClientTest extends BaseTest {
     }
 
     @Test
-    public void testZcount() throws Exception {
+    public void testZcount() {
         ssdbClient.zclear("zkey");
         ssdbClient.zset("zkey", "user1", 123);
         ssdbClient.zset("zkey", "user2", 456);
@@ -450,7 +460,7 @@ public class SsdbClientTest extends BaseTest {
     }
 
     @Test
-    public void testZexists() throws Exception {
+    public void testZexists() {
         ssdbClient.zclear("zkey");
         ssdbClient.zset("zkey", "user1", 123);
 
@@ -459,7 +469,7 @@ public class SsdbClientTest extends BaseTest {
     }
 
     @Test
-    public void testList() throws Exception {
+    public void testList() {
         ssdbClient.qclear("list");
         ssdbClient.qpushFront("list", "one", "two", "three");
         assertEquals(3, ssdbClient.qsize("list"));
@@ -478,7 +488,7 @@ public class SsdbClientTest extends BaseTest {
     }
 
     @Test
-    public void testHlist() throws Exception {
+    public void testHlist() {
         ssdbClient.hset("h1", "name", "name_of_h1");
         ssdbClient.hset("h2", "name", "name_of_h2");
         List<String> keys = ssdbClient.hlist("h0", "h9", -1);
@@ -486,7 +496,7 @@ public class SsdbClientTest extends BaseTest {
     }
 
     @Test
-    public void testHrlist() throws Exception {
+    public void testHrlist() {
         ssdbClient.hset("h1", "name", "name_of_h1");
         ssdbClient.hset("h2", "name", "name_of_h2");
         List<String> keys = ssdbClient.hrlist("h9", "h0", -1);
@@ -494,7 +504,7 @@ public class SsdbClientTest extends BaseTest {
     }
 
     @Test
-    public void testPopAllFront() throws Exception {
+    public void testPopAllFront() {
         ssdbClient.qpushFront("q1", "1");
         ssdbClient.qpushFront("q1", "2");
         ssdbClient.qpushFront("q1", "3");
@@ -502,16 +512,11 @@ public class SsdbClientTest extends BaseTest {
         ssdbClient.qpushFront("q1", "5");
         ssdbClient.qpushFront("q1", "6");
 
-        ssdbClient.qpopAllFront("q1", 5, new Processor<String>() {
-            @Override
-            public void process(String s) {
-                System.out.println(s);
-            }
-        });
+        ssdbClient.qpopAllFront("q1", 5, System.out::println);
     }
 
     @Test
-    public void testPopAllBack() throws Exception {
+    public void testPopAllBack() {
         ssdbClient.qpushFront("q1", "1");
         ssdbClient.qpushFront("q1", "2");
         ssdbClient.qpushFront("q1", "3");
@@ -519,16 +524,11 @@ public class SsdbClientTest extends BaseTest {
         ssdbClient.qpushFront("q1", "5");
         ssdbClient.qpushFront("q1", "6");
 
-        ssdbClient.qpopAllBack("q1", 5, new Processor<String>() {
-            @Override
-            public void process(String s) {
-                System.out.println(s);
-            }
-        });
+        ssdbClient.qpopAllBack("q1", 5, System.out::println);
     }
 
     @Test
-    public void testZget() throws Exception {
+    public void testZget() {
         ssdbClient.zclear("yuwen");
         ssdbClient.zclear("shuxue");
         ssdbClient.zset("yuwen", "zhangsan", 100);
@@ -539,7 +539,7 @@ public class SsdbClientTest extends BaseTest {
     }
 
     @Test
-    public void testZscan() throws Exception {
+    public void testZscan() {
         ssdbClient.zclear("zkey");
         ssdbClient.zset("zkey", "a", 99);
         ssdbClient.zset("zkey", "b", 100);
@@ -557,5 +557,73 @@ public class SsdbClientTest extends BaseTest {
 
         // zrscan
         assertEquals(1, ssdbClient.zrscan("zkey", "b", null, null, 10).size());
+    }
+
+    @Test
+    public void testQpopFrontBytes() {
+        String key = "testQpopFrontBytes";
+        ssdbClient.qclear(key);
+        ssdbClient.qpushBack(key, SAMPLE_BINARY_DATA);
+
+        List<byte[]> list = ssdbClient.qpopFrontBytes(key, 1);
+        assertFalse(list.isEmpty());
+        assertArrayEquals(SAMPLE_BINARY_DATA, list.get(0));
+    }
+
+    @Test
+    public void testQpopBackBytes() {
+        String key = "testQpopBackBytes";
+        ssdbClient.qclear(key);
+        ssdbClient.qpushFront(key, SAMPLE_BINARY_DATA);
+
+        List<byte[]> list = ssdbClient.qpopBackBytes(key, 1);
+        assertFalse(list.isEmpty());
+        assertArrayEquals(SAMPLE_BINARY_DATA, list.get(0));
+    }
+
+    @Test
+    public void testQfrontBytes() {
+        String key = "testQfrontBytes";
+        ssdbClient.qclear(key);
+        ssdbClient.qpushBack(key, SAMPLE_BINARY_DATA);
+        assertEquals(1, ssdbClient.qsize(key));
+
+        byte[] bytes = ssdbClient.qfrontBytes(key);
+        assertArrayEquals(SAMPLE_BINARY_DATA, bytes);
+    }
+
+    @Test
+    public void testQbackBytes() {
+        String key = "testQbackBytes";
+        ssdbClient.qclear(key);
+        ssdbClient.qpushFront(key, SAMPLE_BINARY_DATA);
+        assertEquals(1, ssdbClient.qsize(key));
+
+        byte[] bytes = ssdbClient.qbackBytes(key);
+        assertArrayEquals(SAMPLE_BINARY_DATA, bytes);
+    }
+
+    @Test
+    public void testQrangeBytes() {
+        String key = "testQrangeBytes";
+        ssdbClient.qclear(key);
+        ssdbClient.qpushFront(key, SAMPLE_BINARY_DATA);
+        assertEquals(1, ssdbClient.qsize(key));
+
+        List<byte[]> list = ssdbClient.qrangeBytes(key, 0, 1);
+        assertEquals(1, list.size());
+        assertArrayEquals(SAMPLE_BINARY_DATA, list.get(0));
+    }
+
+    @Test
+    public void testQsliceBytes() {
+        String key = "testQrangeBytes";
+        ssdbClient.qclear(key);
+        ssdbClient.qpushFront(key, SAMPLE_BINARY_DATA);
+        assertEquals(1, ssdbClient.qsize(key));
+
+        List<byte[]> list = ssdbClient.qsliceBytes(key, 0, 0);
+        assertEquals(1, list.size());
+        assertArrayEquals(SAMPLE_BINARY_DATA, list.get(0));
     }
 }
