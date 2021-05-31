@@ -51,7 +51,7 @@ public class ConnectionFactory implements PooledObjectFactory<Connection> {
         Connection connection = p.getObject();
         connection.send(new Request(System.getProperty("SSDB_PING_COMMAND", "dbsize")).toBytes());
         Response response = connection.receivePacket();
-        LOG.info(response.joinBlocks("\n"));
+        // LOG.debug(response.joinBlocks("\n"));
     }
 
     public void passivateObject(PooledObject<Connection> p) throws Exception {
