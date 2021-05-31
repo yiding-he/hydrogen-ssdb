@@ -881,11 +881,25 @@ public class SsdbClient extends AbstractClient {
         return sendWriteRequest("qpop_front", key, size).getBlocks();
     }
 
+    public List<byte[]> qpopFrontBytes(String key, int size) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
+        return sendWriteRequest("qpop_front", key, size).getByteBlocks();
+    }
+
     public List<String> qpopBack(String key, int size) {
         if (Str.isBlank(key)) {
             throw new SsdbException("parameter key is null or blank");
         }
         return sendWriteRequest("qpop_back", key, size).getBlocks();
+    }
+
+    public List<byte[]> qpopBackBytes(String key, int size) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
+        return sendWriteRequest("qpop_back", key, size).getByteBlocks();
     }
 
     public void qpopAllFront(String key, int batchSize, Processor<String> valueProcessor) {
@@ -895,6 +909,18 @@ public class SsdbClient extends AbstractClient {
         while (qsize(key) > 0) {
             List<String> values = qpopFront(key, batchSize);
             for (String value : values) {
+                valueProcessor.process(value);
+            }
+        }
+    }
+
+    public void qpopAllFrontBytes(String key, int batchSize, Processor<byte[]> valueProcessor) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
+        while (qsize(key) > 0) {
+            List<byte[]> values = qpopFrontBytes(key, batchSize);
+            for (byte[] value : values) {
                 valueProcessor.process(value);
             }
         }
@@ -912,6 +938,18 @@ public class SsdbClient extends AbstractClient {
         }
     }
 
+    public void qpopAllBackBytes(String key, int batchSize, Processor<byte[]> valueProcessor) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
+        while (qsize(key) > 0) {
+            List<byte[]> values = qpopBackBytes(key, batchSize);
+            for (byte[] value : values) {
+                valueProcessor.process(value);
+            }
+        }
+    }
+
     public String qfront(String key) {
         if (Str.isBlank(key)) {
             throw new SsdbException("parameter key is null or blank");
@@ -919,11 +957,25 @@ public class SsdbClient extends AbstractClient {
         return sendRequest("qfront", key).firstBlock();
     }
 
+    public byte[] qfrontBytes(String key) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
+        return sendRequest("qfront", key).firstBlockBytes();
+    }
+
     public String qback(String key) {
         if (Str.isBlank(key)) {
             throw new SsdbException("parameter key is null or blank");
         }
         return sendRequest("qback", key).firstBlock();
+    }
+
+    public byte[] qbackBytes(String key) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
+        return sendRequest("qback", key).firstBlockBytes();
     }
 
     public int qsize(String key) {
@@ -968,11 +1020,25 @@ public class SsdbClient extends AbstractClient {
         return sendRequest("qrange", key, offset, limit).getBlocks();
     }
 
+    public List<byte[]> qrangeBytes(String key, int offset, int limit) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
+        return sendRequest("qrange", key, offset, limit).getByteBlocks();
+    }
+
     public List<String> qslice(String key, int startInclude, int endInclude) {
         if (Str.isBlank(key)) {
             throw new SsdbException("parameter key is null or blank");
         }
         return sendRequest("qslice", key, startInclude, endInclude).getBlocks();
+    }
+
+    public List<byte[]> qsliceBytes(String key, int startInclude, int endInclude) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
+        return sendRequest("qslice", key, startInclude, endInclude).getByteBlocks();
     }
 
     public int qtrimFront(String key, int size) {
