@@ -1,6 +1,7 @@
 package com.hyd.ssdb.conn;
 
 import com.hyd.ssdb.BaseTest;
+import com.hyd.ssdb.SsdbClient;
 import com.hyd.ssdb.conf.Server;
 import com.hyd.ssdb.protocol.Request;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
@@ -39,5 +40,19 @@ public class ConnectionPoolFactoryTest extends BaseTest {
         pac.getConnectionPool().returnObject(pac.getConnection());
 
         Thread.sleep(10000);
+    }
+
+    @Test
+    public void testHeartbeat() throws Exception {
+        Server server = new Server("localhost", 8888);
+
+        GenericObjectPoolConfig<Connection> poolConfig = server.getPoolConfig();
+        poolConfig.setTestWhileIdle(true);
+        poolConfig.setTimeBetweenEvictionRunsMillis(1000);
+
+        SsdbClient client = new SsdbClient(server);
+        client.set("key", "value");
+        Thread.sleep(10000);
+        client.close();
     }
 }
