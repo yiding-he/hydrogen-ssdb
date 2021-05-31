@@ -2,8 +2,13 @@ package com.hyd.ssdb.protocol;
 
 import com.hyd.ssdb.util.IdScore;
 import com.hyd.ssdb.util.KeyValue;
+
 import java.nio.charset.Charset;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * (description)
@@ -17,7 +22,7 @@ public class Response {
 
     private List<Block> body = new ArrayList<>();
 
-    private Charset charset;
+    private final Charset charset;
 
     public Response(Charset charset) {
         this.charset = charset;
@@ -48,6 +53,10 @@ public class Response {
     }
 
     public String joinBlocks(char joint) {
+        return joinBlocks(new String(new char[]{joint}));
+    }
+
+    public String joinBlocks(String joint) {
 
         if (this.body.isEmpty()) {
             return "";
@@ -56,12 +65,7 @@ public class Response {
             return this.body.get(0).toString();
 
         } else {
-            StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < this.body.size() - 1; i++) {
-                sb.append(this.body.get(i)).append(joint);
-            }
-            sb.append(this.body.get(this.body.size() - 1));
-            return sb.toString();
+            return this.body.stream().map(Block::toString).collect(Collectors.joining(joint));
         }
     }
 

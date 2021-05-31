@@ -37,7 +37,7 @@ public abstract class AbstractClient {
     /**
      * 管理所有的 SSDB 连接
      */
-    private ConnectionPoolManager connectionPoolManager;
+    private final ConnectionPoolManager connectionPoolManager;
 
     /**
      * 字符编码
@@ -65,6 +65,15 @@ public abstract class AbstractClient {
      */
     public Sharding getSharding() {
         return this.connectionPoolManager.getSharding();
+    }
+
+    /**
+     * 获取连接池管理对象（可用于初始化后、正式执行 SSDB 操作之前的调整）
+     *
+     * @return 连接池管理对象
+     */
+    public ConnectionPoolManager getConnectionPoolManager() {
+        return connectionPoolManager;
     }
 
     /**
@@ -173,20 +182,26 @@ public abstract class AbstractClient {
         return sendRequestToAll(request);
     }
 
+    /**
+     * 发送指定请求到所有 Cluster，并收集返回的 Response 对象
+     * TODO 如果将来需要让发送请求的过程并发执行，则需修改这里
+     *
+     * @param request 请求
+     *
+     * @return Response 对象集合
+     */
     protected List<Response> sendRequestToAll(Request request) {
-        List<PoolAndConnection> pacList = connectionPoolManager.getAllConnections(request);
+        List<PoolAndConnection> pacList = connectionPoolManager.getAllClusterConnections(request);
         List<Response> responseList = new ArrayList<>();
 
         for (PoolAndConnection pac : pacList) {
             Connection connection = pac.getConnection();
-
             try {
                 responseList.add(sendRequest(request, connection));
             } finally {
                 pac.getConnectionPool().returnObject(connection);
             }
         }
-
         return responseList;
     }
 

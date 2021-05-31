@@ -2,12 +2,22 @@ package com.hyd.ssdb.conn;
 
 import com.hyd.ssdb.*;
 import com.hyd.ssdb.conf.Server;
-import com.hyd.ssdb.protocol.*;
-import java.io.*;
+import com.hyd.ssdb.protocol.Block;
+import com.hyd.ssdb.protocol.Request;
+import com.hyd.ssdb.protocol.Response;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.nio.charset.Charset;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * 对 Socket 的包装。一旦发送或读取内容失败，Connection
@@ -17,15 +27,17 @@ import java.util.*;
  */
 public class Connection {
 
-    private Socket socket;      // 网络连接套接字
+    static final Logger LOG = LoggerFactory.getLogger(Connection.class);
 
-    private String pass;        // 连接成功后发送认证口令
+    private final Socket socket;      // 网络连接套接字
 
-    private boolean available;  // 是否已经不再可用
+    private final String pass;        // 连接成功后发送认证口令
 
-    private int buffer;         // 读取数据时缓存区的长度
+    private final int buffer;         // 读取数据时缓存区的长度
 
-    private Map<String, Object> properties = new HashMap<>();   // 其他属性
+    private final Map<String, Object> properties = new HashMap<>();   // 其他属性
+
+    private boolean available;        // 可用状态
 
     public Connection(Server server) {
         this(server.getHost(), server.getPort(), server.getPass(),
@@ -85,10 +97,15 @@ public class Connection {
     }
 
     public void send(byte[] bytes) {
+        if (bytes == null || bytes.length == 0) {
+            throw new SsdbClientException("Cannot send empty content: " + Arrays.toString(bytes));
+        }
+
         try {
             OutputStream outputStream = this.socket.getOutputStream();
             outputStream.write(bytes);
             outputStream.flush();
+            LOG.debug("Send {} bytes.", bytes.length);
         } catch (IOException e) {
             this.available = false;
             throw new SsdbSocketFailedException(e);
@@ -110,7 +127,7 @@ public class Connection {
             StringBuilder numSb = new StringBuilder();
 
             byte b;
-            int dataLength = 0, dataCounter = 0;
+            int dataLength = 0, dataCounter = 0, lengthCounter = 0;
             int blockStatus = 0; // 0=ready, 1=receiving_length, 2=receiving_data, 3=data_finished
             int responseStatus = 0; //0=ready, 1=head_received
 
@@ -120,12 +137,15 @@ public class Connection {
                 int len = inputStream.read(bs);
                 if (len == -1) {
                     break;
+                } else {
+                    lengthCounter += len;
                 }
 
                 for (int i = 0; i < len; i++) {
                     b = bs[i];
                     if (b == '\n') {
                         if (blockStatus == 0) {
+                            LOG.debug("Received {} bytes.", lengthCounter);
                             return response;  // 方法唯一的正确出口
 
                         } else if (blockStatus == 1) {
@@ -184,7 +204,7 @@ public class Connection {
         } catch (SocketTimeoutException e) {
             this.available = false;
             throw new SsdbSocketFailedException("Socket timed out, already read: " +
-                    (bos == null ? "" : new String(bos.toByteArray())), e);
+                (bos == null ? "" : bos.toString()), e);
         } catch (IOException e) {
             this.available = false;
             throw new SsdbSocketFailedException(e);

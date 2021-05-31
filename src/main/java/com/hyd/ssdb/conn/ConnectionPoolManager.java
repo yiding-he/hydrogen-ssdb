@@ -9,15 +9,16 @@ import com.hyd.ssdb.conf.Server;
 import com.hyd.ssdb.conf.Sharding;
 import com.hyd.ssdb.protocol.Request;
 import com.hyd.ssdb.protocol.WriteRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
- * NetworkManager 有两个职责：
+ * ConnectionPoolManager 有两个职责：
  * 1、管理网络的拓扑结构（通过 Sharding 类），决定请求发送到哪个 SSDB 服务器；
  * 2、当请求发送失败时，自动更新失效的服务器列表，并尝试重新发送请求到同一
  * Cluster 的其他服务器，直到没有服务器可用，才抛出异常。
@@ -26,22 +27,30 @@ import org.slf4j.LoggerFactory;
  */
 public class ConnectionPoolManager {
 
+    public static final ConnectionPoolFactory DEFAULT_CONNECTION_POOL_FACTORY = DefaultConnectionPool::new;
+
     private static final Logger LOG = LoggerFactory.getLogger(ConnectionPoolManager.class);
 
-    private Sharding sharding;  // 负载均衡拓扑结构
+    private final Sharding sharding;  // 负载均衡拓扑结构
 
-    private Map<Server, ConnectionPool> connectionPoolMap = new ConcurrentHashMap<Server, ConnectionPool>();
+    private final Map<Server, ConnectionPool> connectionPoolMap = new ConcurrentHashMap<>();
+
+    private ConnectionPoolFactory connectionPoolFactory = DEFAULT_CONNECTION_POOL_FACTORY;
 
     public ConnectionPoolManager(Sharding sharding) {
         this.sharding = sharding;
         this.sharding.initClusters();
     }
 
+    public void setConnectionPoolFactory(ConnectionPoolFactory connectionPoolFactory) {
+        this.connectionPoolFactory = connectionPoolFactory;
+    }
+
     public Sharding getSharding() {
         return sharding;
     }
 
-    public List<PoolAndConnection> getAllConnections(Request request) {
+    public List<PoolAndConnection> getAllClusterConnections(Request request) {
         boolean write = request instanceof WriteRequest;
         List<PoolAndConnection> result = new ArrayList<PoolAndConnection>();
 
@@ -90,7 +99,7 @@ public class ConnectionPoolManager {
 
             } catch (SsdbSocketFailedException e) { // 表示 server 连接创建失败
                 if (connectionPool != null) {
-                    Server server = connectionPool.getConnectionFactory().getServer();
+                    Server server = connectionPool.getServer();
                     // 将服务器标记为不可用，这样下次 do-while 循环就会跳过该服务器
                     reportInvalidConnection(server.getHost(), server.getPort());
                     retry = true;
@@ -154,7 +163,7 @@ public class ConnectionPoolManager {
     }
 
     private ConnectionPool createConnectionPool(Server server) {
-        return new ConnectionPool(server);
+        return this.connectionPoolFactory.createConnectionPool(server);
     }
 
     /**

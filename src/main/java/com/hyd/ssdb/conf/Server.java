@@ -6,7 +6,7 @@ import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 import java.time.Duration;
 
 /**
- * 对一台具体的 SSDB 服务器的配置，包括地址、端口、校验密码和其他性能配置。
+ * 对一台具体的 SSDB 服务器的配置，包括地址、端口、校验密码、连接池配置和 Socket 配置。
  * created at 15-12-3
  *
  * @author Yiding
@@ -197,6 +197,7 @@ public class Server {
         return "Server{" +
             "host='" + host + '\'' +
             ", port=" + port +
+            ", pass=" + (pass == null ? "(null)" : "(non-null)") +
             ", master=" + master +
             ", poolConfig=" + poolConfig +
             ", socketConfig=" + socketConfig +
