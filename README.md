@@ -140,6 +140,8 @@ SsdbClient ssdbClient = new SsdbClient(sharding);
 因为一个 `SsdbClient` 对象可能包含一个或多个连接池（每个连接池对应一个 SSDB 服务器），因此请不要创建大量的 `SsdbClient` 对象，这样完全没有必要，也会使得内存很容易被用光。
 
 ## 更新
+* 2021-06-09：版本号更新到 `V1.2.7`
+    * 没有调整执行逻辑，调整连接池创建机制，允许自定义连接池和连接池工厂
 * 2020-10-29: 版本号更新到 `V1.2.6`
     * SsdbClient 新增 `qpopFrontBytes()`, `qpopBackBytes()`, `qpopAllFrontBytes()`, `qpopAllBackBytes()`, `qfrontBytes()`, `qbackBytes()`, `qrangeBytes()`, `qsliceBytes()`
 * 2020-09-26: 版本号更新到 `V1.2.5`

@@ -19,10 +19,7 @@ import java.util.Map;
 
 /**
  * 基于一致性哈希的分片策略。这是 hydrogen-ssdb 实现的缺省分片策略。
- * <p></p>
  * ConsistentHashSharding 有一个属性叫做 {@link #spofStrategy}，用于决定当出现单点故障时如何处理。
- * <p></p>
- * created at 15-12-8
  *
  * @author Yiding
  */

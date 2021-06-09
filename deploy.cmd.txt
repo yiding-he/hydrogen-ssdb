@@ -1,0 +1,1 @@
+mvn -P maven-release -Dmaven.test.skip=true -DPASS=XXX clean deploy
