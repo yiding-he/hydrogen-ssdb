@@ -190,6 +190,32 @@ public class SsdbClientTest extends BaseTest {
     }
 
     @Test
+    public void testQpushFrontBytesArr() {
+        ssdbClient.qclear("queue");
+        ssdbClient.qpushFront("queue", new byte[][]{
+            {50, 51, 52, 53},
+            {54, 55, 56, 67},
+            {58, 59, 60, 61}
+        });
+        System.out.println(Arrays.toString(ssdbClient.qgetBytes("queue", 0)));
+        System.out.println(Arrays.toString(ssdbClient.qgetBytes("queue", 1)));
+        System.out.println(Arrays.toString(ssdbClient.qgetBytes("queue", 2)));
+    }
+
+    @Test
+    public void testQpushBackBytesArr() {
+        ssdbClient.qclear("queue");
+        ssdbClient.qpushBack("queue", new byte[][]{
+            {50, 51, 52, 53},
+            {54, 55, 56, 67},
+            {58, 59, 60, 61}
+        });
+        System.out.println(Arrays.toString(ssdbClient.qgetBytes("queue", 0)));
+        System.out.println(Arrays.toString(ssdbClient.qgetBytes("queue", 1)));
+        System.out.println(Arrays.toString(ssdbClient.qgetBytes("queue", 2)));
+    }
+
+    @Test
     public void testIncr() {
         ssdbClient.set("counter", 123);
         assertEquals(223, ssdbClient.incr("counter", 100));

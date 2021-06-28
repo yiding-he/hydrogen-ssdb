@@ -558,7 +558,7 @@ public class SsdbClient extends AbstractClient {
             throw new SsdbException("Length of props must be odd");
         }
 
-        String[] command = prependCommand("multi_hset", key, props);
+        Object[] command = prependCommand("multi_hset", key, props);
         sendWriteRequest((Object[]) command);
     }
 
@@ -587,7 +587,7 @@ public class SsdbClient extends AbstractClient {
         if (Str.isBlank(key)) {
             throw new SsdbException("parameter key is null or blank");
         }
-        sendWriteRequest((Object[]) prependCommand("multi_hdel", key, propNames));
+        sendWriteRequest(prependCommand("multi_hdel", key, propNames));
     }
 
     //////////////////////////////////////////////////////////////// sorted set
@@ -860,6 +860,15 @@ public class SsdbClient extends AbstractClient {
         return sendWriteRequest("qpush_front", key, bytes).getIntResult();
     }
 
+    public int qpushFront(String key, byte[][] bytes) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
+        Object[] params = new Object[bytes.length];
+        System.arraycopy(bytes, 0, params, 0, params.length);
+        return sendWriteRequest(prependCommand("qpush_front", key, params)).getIntResult();
+    }
+
     public int qpushBack(String key, String... values) {
         if (Str.isBlank(key)) {
             throw new SsdbException("parameter key is null or blank");
@@ -872,6 +881,15 @@ public class SsdbClient extends AbstractClient {
             throw new SsdbException("parameter key is null or blank");
         }
         return sendWriteRequest("qpush_back", key, bytes).getIntResult();
+    }
+
+    public int qpushBack(String key, byte[][] bytes) {
+        if (Str.isBlank(key)) {
+            throw new SsdbException("parameter key is null or blank");
+        }
+        Object[] params = new Object[bytes.length];
+        System.arraycopy(bytes, 0, params, 0, params.length);
+        return sendWriteRequest(prependCommand("qpush_back", key, params)).getIntResult();
     }
 
     public List<String> qpopFront(String key, int size) {

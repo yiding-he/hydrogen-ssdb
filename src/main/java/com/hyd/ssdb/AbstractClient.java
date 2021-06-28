@@ -273,8 +273,8 @@ public abstract class AbstractClient {
      *
      * @return 新生成的数组
      */
-    protected String[] prependCommand(String token1, String token2, String[] parameters) {
-        String[] command = new String[parameters.length + 2];
+    protected Object[] prependCommand(Object token1, Object token2, Object[] parameters) {
+        Object[] command = new Object[parameters.length + 2];
         command[0] = token1;
         command[1] = token2;
         System.arraycopy(parameters, 0, command, 2, parameters.length);
@@ -282,8 +282,8 @@ public abstract class AbstractClient {
     }
 
     // 将 token1，token2 和 parameters 组合成一个字符串数组
-    protected String[] prependCommand(String token1, String token2, List<String> parameters) {
-        return prependCommand(token1, token2, parameters.toArray(new String[0]));
+    protected Object[] prependCommand(Object token1, Object token2, List<?> parameters) {
+        return prependCommand(token1, token2, parameters.toArray(new Object[0]));
     }
 
     // 将 token1，token2 和 keyValues 组合成一个字符串数组
