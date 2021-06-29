@@ -6,7 +6,7 @@
 
     <groupId>com.github.yiding-he</groupId>
     <artifactId>hydrogen-ssdb</artifactId>
-    <version>1.2.8-SNAPSHOT</version>
+    <version>1.2.8</version>
     <packaging>jar</packaging>
 
     <name>hydrogen-ssdb</name>
