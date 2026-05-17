@@ -16,7 +16,7 @@ Java 编写的 SSDB 客户端。
 
 hydrogen-ssdb 是一个 Java 编写的 [SSDB](https://github.com/ideawu/ssdb)  客户端，支持多线程并发请求和多服务器的负载均衡（客户端分发请求）。
 
-SSDB 是一个类似 Redis 的 NOSQL 数据库，兼容 Redis 协议，且支持多线程，内存占用小。
+SSDB 是一个类似 Redis 的 NOSQL 数据库，兼容 Redis 的数据结构和部分命令，且支持多线程，内存占用小。
 
 hydrogen-ssdb 是一个 SSDB 客户端，具有以下特性：
 
